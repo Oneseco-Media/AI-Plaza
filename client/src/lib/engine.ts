@@ -20,7 +20,11 @@ export type Character = {
   id: string;
   name: string;
   personality: string;
-  color: string;
+  color: number; // Hex color for Phaser
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
 };
 
 export type Dialogue = {
@@ -50,9 +54,10 @@ export const initialWorldState: WorldState = {
   turn: 0
 };
 
+// Map size 40x30, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', personality: 'Rebellious hacker, fast-talking, distrusts authority.', color: 'text-cyan-400' },
-  { id: 'c2', name: 'Cipher', personality: 'Calculated info-broker, speaks in riddles, values leverage.', color: 'text-fuchsia-400' }
+  { id: 'c1', name: 'Neon', personality: 'Rebellious hacker', color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15 },
+  { id: 'c2', name: 'Cipher', personality: 'Calculated info-broker', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15 }
 ];
 
 // Mock Conversational Data
@@ -70,10 +75,11 @@ const conversationPool = [
 class Engine {
   private state: WorldState;
   private eventHandlers: Map<string, Array<(event: Event) => void>>;
-  private listeners: Array<(state: WorldState, events: Event[], dialogues: Dialogue[]) => void>;
+  private listeners: Array<(state: WorldState, events: Event[], dialogues: Dialogue[], chars: Character[]) => void>;
   
   public events: Event[] = [];
   public dialogues: Dialogue[] = [];
+  public chars: Character[] = JSON.parse(JSON.stringify(characters));
   private turnCounter = 0;
 
   constructor(initialState: WorldState) {
@@ -91,81 +97,116 @@ class Engine {
     this.eventHandlers.get(eventType)!.push(handler);
   }
 
-  public subscribe(listener: (state: WorldState, events: Event[], dialogues: Dialogue[]) => void) {
+  public subscribe(listener: (state: WorldState, events: Event[], dialogues: Dialogue[], chars: Character[]) => void) {
     this.listeners.push(listener);
     this.notify();
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
   }
 
   private notify() {
-    this.listeners.forEach(l => l(this.state, this.events, this.dialogues));
+    this.listeners.forEach(l => l(this.state, this.events, this.dialogues, this.chars));
   }
 
-  // Emit an event to the system
   private emit(event: Event) {
-    this.events.unshift(event); // Add to front
-    if (this.events.length > 50) this.events.pop(); // Cap history
+    this.events.unshift(event);
+    if (this.events.length > 50) this.events.pop();
     
     const handlers = this.eventHandlers.get(event.type) || [];
     handlers.forEach(h => h(event));
     
-    // Also trigger wildcard handlers if any
     const wildcardHandlers = this.eventHandlers.get('*') || [];
     wildcardHandlers.forEach(h => h(event));
     
     this.notify();
   }
 
-  // Core Engine Loop (Mocked)
+  // Pathfinding / wandering mockup
+  private updateCharacterPositions() {
+    // Basic random walk
+    this.chars.forEach(c => {
+      // If reached target, pick new target
+      if (c.x === c.targetX && c.y === c.targetY) {
+        // If close to each other, maybe stay to chat?
+        const otherChar = this.chars.find(o => o.id !== c.id);
+        if (otherChar && Math.random() > 0.7) {
+          // move towards other char
+          c.targetX = c.x + (otherChar.x > c.x ? 1 : otherChar.x < c.x ? -1 : 0);
+          c.targetY = c.y + (otherChar.y > c.y ? 1 : otherChar.y < c.y ? -1 : 0);
+        } else {
+          // random walk 1 tile
+          const dir = Math.floor(Math.random() * 4);
+          if (dir === 0) c.targetY = Math.max(0, c.y - 1);
+          if (dir === 1) c.targetY = Math.min(29, c.y + 1); // MAP_HEIGHT 30
+          if (dir === 2) c.targetX = Math.max(0, c.x - 1);
+          if (dir === 3) c.targetX = Math.min(39, c.x + 1); // MAP_WIDTH 40
+        }
+      } else {
+        // move 1 step towards target
+        if (c.x < c.targetX) c.x++;
+        else if (c.x > c.targetX) c.x--;
+        
+        if (c.y < c.targetY) c.y++;
+        else if (c.y > c.targetY) c.y--;
+      }
+    });
+  }
+
   public advanceTurn() {
     this.turnCounter++;
     this.state.turn = this.turnCounter;
     
-    // 1. Generate Dialogue
-    const speaker1 = characters[0];
-    const speaker2 = characters[1];
-    
-    const poolIndex = (this.turnCounter - 1) * 2 % conversationPool.length;
-    const utterance1 = conversationPool[poolIndex];
-    const utterance2 = conversationPool[(poolIndex + 1) % conversationPool.length];
+    // 1. Move characters
+    this.updateCharacterPositions();
+    this.notify();
 
-    const d1: Dialogue = {
-      id: `d_${Date.now()}_1`,
-      speakerId: speaker1.id,
-      text: utterance1.text,
-      timestamp: new Date().toLocaleTimeString()
-    };
+    // 2. Generate Dialogue every few turns, or if they are close
+    const speaker1 = this.chars[0];
+    const speaker2 = this.chars[1];
+    const dist = Math.abs(speaker1.x - speaker2.x) + Math.abs(speaker1.y - speaker2.y);
     
-    setTimeout(() => {
-      this.dialogues.push(d1);
-      this.notify();
-      this.extractEventsFromDialogue(d1, utterance1.intents);
+    // They speak if they are close, or randomly
+    if (dist < 4 || this.turnCounter % 8 === 0) {
+      const poolIndex = (this.turnCounter - 1) * 2 % conversationPool.length;
+      const utterance1 = conversationPool[poolIndex];
+      const utterance2 = conversationPool[(poolIndex + 1) % conversationPool.length];
+
+      const d1: Dialogue = {
+        id: `d_${Date.now()}_1`,
+        speakerId: speaker1.id,
+        text: utterance1.text,
+        timestamp: new Date().toLocaleTimeString()
+      };
       
       setTimeout(() => {
-        const d2: Dialogue = {
-          id: `d_${Date.now()}_2`,
-          speakerId: speaker2.id,
-          text: utterance2.text,
-          timestamp: new Date().toLocaleTimeString()
-        };
-        this.dialogues.push(d2);
+        this.dialogues.push(d1);
         this.notify();
-        this.extractEventsFromDialogue(d2, utterance2.intents);
-      }, 1000); // Delay for visual effect
-      
-    }, 500);
+        this.extractEventsFromDialogue(d1, utterance1.intents);
+        
+        setTimeout(() => {
+          const d2: Dialogue = {
+            id: `d_${Date.now()}_2`,
+            speakerId: speaker2.id,
+            text: utterance2.text,
+            timestamp: new Date().toLocaleTimeString()
+          };
+          this.dialogues.push(d2);
+          this.notify();
+          this.extractEventsFromDialogue(d2, utterance2.intents);
+        }, 2500); 
+        
+      }, 500);
+    }
   }
 
-  // 2. Event Extraction (Mocked NLP)
   private extractEventsFromDialogue(dialogue: Dialogue, intents: string[]) {
-    // In a real app, an LLM would parse `dialogue.text` to JSON events.
-    // Here we use pre-mapped intents to mock the extraction.
-    
     intents.forEach(intent => {
       if (intent === 'TENSION_UP') {
         this.emit({
           id: `ev_${Date.now()}_${Math.random()}`,
           type: 'SYSTEM_ALERT',
-          description: `Grid tension increased due to ${characters.find(c=>c.id===dialogue.speakerId)?.name}'s chatter.`,
+          description: `Grid tension increased.`,
           payload: { district: 'Neon Grid', amount: 5 },
           timestamp: new Date().toLocaleTimeString()
         });
@@ -197,7 +238,6 @@ class Engine {
     });
   }
 
-  // 3. Event Processing (Plugins mutate state)
   private registerDefaultPlugins() {
     this.on('SYSTEM_ALERT', (e) => {
       if (e.payload.district && this.state.districts[e.payload.district]) {
@@ -226,6 +266,7 @@ class Engine {
     this.state = JSON.parse(JSON.stringify(initialWorldState));
     this.events = [];
     this.dialogues = [];
+    this.chars = JSON.parse(JSON.stringify(characters));
     this.turnCounter = 0;
     this.emit({
       id: `ev_reset`,
