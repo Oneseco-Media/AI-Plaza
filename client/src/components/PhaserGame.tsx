@@ -33,6 +33,7 @@ export default function PhaserGame() {
         autoCenter: Phaser.Scale.CENTER_BOTH
       },
       scene: {
+        preload: preloadScene,
         create: createScene,
         update: updateScene
       },
@@ -45,42 +46,81 @@ export default function PhaserGame() {
       }
     };
 
-    let sprites: Record<string, Phaser.GameObjects.Rectangle> = {};
+    let sprites: Record<string, Phaser.GameObjects.Sprite> = {};
     let names: Record<string, Phaser.GameObjects.Text> = {};
     let bubbles: Record<string, Phaser.GameObjects.Container> = {};
     let currentDialogues: Set<string> = new Set();
     
     let currentScene: Phaser.Scene;
 
+    function preloadScene(this: Phaser.Scene) {
+      this.load.spritesheet('dude', '/dude.png', { frameWidth: 32, frameHeight: 48 });
+      this.load.spritesheet('desert', '/desert.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 1 });
+      this.load.image('tree', '/tree.png');
+    }
+
     function createScene(this: Phaser.Scene) {
       currentScene = this;
 
-      // Draw Grass/Grid environment to look like a world
-      const graphics = this.add.graphics();
-      // Floor pattern
+      // Floor pattern using desert tiles
       for (let x = 0; x < MAP_WIDTH; x++) {
         for (let y = 0; y < MAP_HEIGHT; y++) {
-           graphics.fillStyle((x+y)%2 === 0 ? 0x111827 : 0x1f2937, 1); // Checkerboard tile floor
-           graphics.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          // Use sand tile (index 29 in tmw_desert)
+          const tileIndex = (Math.random() > 0.9) ? 30 : 29; // occasionally add a variation
+          const tile = this.add.sprite(x * TILE_SIZE, y * TILE_SIZE, 'desert', tileIndex).setOrigin(0);
+          
+          // Tint to fit our cyberpunk/neon palette slightly, or keep it original 16-bit
+          // We will tint the environment slightly blue/dark to keep the Cyberpunk vibe
+          tile.tint = 0x88aacc;
         }
       }
 
       // Add a border around the world
+      const graphics = this.add.graphics();
       graphics.lineStyle(4, 0x06b6d4, 0.5);
       graphics.strokeRect(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
 
+      // Add some random trees for scenery
+      for (let i = 0; i < 40; i++) {
+        const tx = Phaser.Math.Between(1, MAP_WIDTH - 2) * TILE_SIZE;
+        const ty = Phaser.Math.Between(1, MAP_HEIGHT - 2) * TILE_SIZE;
+        const tree = this.add.image(tx, ty, 'tree').setOrigin(0.5, 1);
+        tree.tint = 0x66ccff; // neon tint
+      }
+
+      // Create animations
+      this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'dude', frame: 4 } ],
+        frameRate: 20
+      });
+
+      this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+      });
+
       // Setup initial characters
       worldEngine.chars.forEach(c => {
-        sprites[c.id] = this.add.rectangle(c.x * TILE_SIZE + TILE_SIZE/2, c.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE * 0.8, TILE_SIZE * 0.8, c.color);
-        names[c.id] = this.add.text(c.x * TILE_SIZE + TILE_SIZE/2, c.y * TILE_SIZE - 10, c.name, {
+        sprites[c.id] = this.add.sprite(c.x * TILE_SIZE + TILE_SIZE/2, c.y * TILE_SIZE + TILE_SIZE/2, 'dude');
+        sprites[c.id].tint = c.color;
+        
+        names[c.id] = this.add.text(c.x * TILE_SIZE + TILE_SIZE/2, c.y * TILE_SIZE - 20, c.name, {
           fontFamily: 'monospace', fontSize: '12px', color: '#fff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
       });
 
       // Camera settings
       this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
-      
-      // Follow the midpoint between characters
       this.cameras.main.setZoom(1.5);
     }
 
@@ -146,15 +186,34 @@ export default function PhaserGame() {
           const targetPxY = c.y * TILE_SIZE + TILE_SIZE/2;
 
           // Smooth interpolation for tile walking
-          sprites[c.id].x += (targetPxX - sprites[c.id].x) * 0.05;
-          sprites[c.id].y += (targetPxY - sprites[c.id].y) * 0.05;
+          const dx = targetPxX - sprites[c.id].x;
+          const dy = targetPxY - sprites[c.id].y;
+          
+          sprites[c.id].x += dx * 0.05;
+          sprites[c.id].y += dy * 0.05;
+
+          // Animation logic
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            if (Math.abs(dx) > Math.abs(dy)) {
+              if (dx < 0) sprites[c.id].anims.play('left', true);
+              else sprites[c.id].anims.play('right', true);
+            } else {
+              // Since dude only has left/right/turn, we'll use left/right for up/down slightly or just turn
+              // Actually, left/right looks better when moving than standing still
+              if (dx < 0) sprites[c.id].anims.play('left', true);
+              else if (dx > 0) sprites[c.id].anims.play('right', true);
+              else sprites[c.id].anims.play('left', true); // generic walk
+            }
+          } else {
+            sprites[c.id].anims.play('turn');
+          }
           
           names[c.id].x = sprites[c.id].x;
-          names[c.id].y = sprites[c.id].y - 20;
+          names[c.id].y = sprites[c.id].y - 30;
 
           if (bubbles[c.id]) {
             bubbles[c.id].x = sprites[c.id].x;
-            bubbles[c.id].y = sprites[c.id].y - TILE_SIZE;
+            bubbles[c.id].y = sprites[c.id].y - TILE_SIZE - 10;
           }
 
           midX += sprites[c.id].x;
