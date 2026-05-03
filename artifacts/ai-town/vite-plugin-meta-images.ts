@@ -17,7 +17,7 @@ export function metaImagesPlugin(): Plugin {
       }
 
       // Check if opengraph image exists in public directory
-      const publicDir = path.resolve(process.cwd(), 'client', 'public');
+      const publicDir = path.resolve(import.meta.dirname, 'public');
       const opengraphPngPath = path.join(publicDir, 'opengraph.png');
       const opengraphJpgPath = path.join(publicDir, 'opengraph.jpg');
       const opengraphJpegPath = path.join(publicDir, 'opengraph.jpeg');
