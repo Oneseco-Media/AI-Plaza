@@ -22,7 +22,8 @@ export default function PhaserGame() {
   useEffect(() => {
     if (!gameRef.current) return;
 
-    const config: Phaser.Types.Core.GameConfig = {
+      // Set exact width and height for game config to match full window
+      const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: window.innerWidth,
       height: window.innerHeight,
@@ -192,9 +193,19 @@ export default function PhaserGame() {
         poiMarkers[poi.id] = container;
       });
 
-      // Camera settings
+      // Calculate scaling to stretch background across the screen
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const mapPixelW = MAP_WIDTH * TILE_SIZE;
+      const mapPixelH = MAP_HEIGHT * TILE_SIZE;
+      
+      // Calculate a zoom level that covers the screen entirely
+      const zoomX = screenW / mapPixelW;
+      const zoomY = screenH / mapPixelH;
+      const targetZoom = Math.max(zoomX, zoomY, 0.6); // Take the larger to cover screen, min 0.6
+      
       this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
-      this.cameras.main.setZoom(0.6);
+      this.cameras.main.setZoom(targetZoom);
 
       // Create particle emitter for weather
       const rainConfig = {
