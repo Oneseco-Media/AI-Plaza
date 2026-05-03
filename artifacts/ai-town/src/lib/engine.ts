@@ -1,4 +1,4 @@
-// AI Town World Engine Logic (Mockup)
+// AI Town World Engine Logic
 
 export type PointOfInterest = {
   id: string;
@@ -146,6 +146,42 @@ const conversationPool = [
   { text: "Stay low, keep your gold hidden.", intents: [] }
 ];
 
+// Base URL for the AI Town API
+const AI_API_BASE = "/api/ai-town";
+
+async function fetchAIDialogue(params: {
+  character: string;
+  otherCharacter?: string;
+  worldMood: string;
+  faction?: string | null;
+  role: string;
+  trait: string;
+  location?: string;
+}): Promise<string> {
+  try {
+    const res = await fetch(`${AI_API_BASE}/dialogue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json() as { text: string };
+    return data.text;
+  } catch {
+    // Fallback static lines
+    const fallbacks: Record<string, string[]> = {
+      Warrior: ["For glory and gold!", "The dungeon awaits.", "Steel never lies."],
+      Mage: ["The arcane stirs today.", "Ancient magic is restless.", "Power flows through runes."],
+      Rogue: ["Eyes open, blade ready.", "Gold speaks louder than honor.", "Shadows are my allies."],
+      Cleric: ["May the light guide us.", "Faith sustains all.", "Healing is my calling."],
+      Paladin: ["Justice shall prevail.", "Honor above all.", "I uphold the sacred code."],
+      Merchant: ["A fair deal for all.", "Gold is the universal tongue.", "Supply meets demand."],
+    };
+    const lines = fallbacks[params.role] ?? ["..."];
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+}
+
 class Engine {
   private state: WorldState;
   private eventHandlers: Map<string, Array<(event: Event) => void>>;
@@ -155,6 +191,7 @@ class Engine {
   public dialogues: Dialogue[] = [];
   public chars: Character[] = JSON.parse(JSON.stringify(characters));
   private turnCounter = 0;
+  private aiEnabled = true; // Toggle AI dialogue on/off
 
   constructor(initialState: WorldState) {
     this.state = JSON.parse(JSON.stringify(initialState));
@@ -643,49 +680,85 @@ class Engine {
     if (speakers.length > 0 && Math.random() > 0.3) {
       const speaker1 = speakers[0];
       const speaker2 = speakers[1];
-      
-      let u1Text = "";
-      let u2Text = "";
-      let intents1: string[] = [];
-      let intents2: string[] = [];
 
-      // Check if speaker1 has a new item to brag about
-      if (speaker1.inventory.length > 0 && Math.random() > 0.5) {
-         const item = speaker1.inventory[speaker1.inventory.length - 1];
-         u1Text = `Check it out, just found a ${item.name} for ${item.value} gold.`;
-         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Thieves might want that." : "Not bad. Keep training.";
-      } else {
-         const poolIndex = Math.floor(Math.random() * conversationPool.length);
-         u1Text = conversationPool[poolIndex].text;
-         intents1 = conversationPool[poolIndex].intents;
-         u2Text = conversationPool[(poolIndex + 1) % conversationPool.length].text;
-         intents2 = conversationPool[(poolIndex + 1) % conversationPool.length].intents;
-      }
+      // Find location of speaker1
+      const nearbyPoi = this.state.pois.find(p => Math.abs(p.x - speaker1.x) + Math.abs(p.y - speaker1.y) < 4);
+      const location = nearbyPoi?.name;
 
-      const d1: Dialogue = {
-        id: `d_${Date.now()}_1`,
-        speakerId: speaker1.id,
-        text: u1Text,
-        timestamp: new Date().toLocaleTimeString()
-      };
-      
+      // Async AI dialogue — fire and forget, does not block the engine tick
+      this.generateAIDialogue(speaker1, speaker2, location);
+    }
+  }
+
+  private async generateAIDialogue(speaker1: Character, speaker2: Character, location?: string) {
+    // Check if speaker1 has a new item to share
+    if (speaker1.inventory.length > 0 && Math.random() > 0.5) {
+      const item = speaker1.inventory[speaker1.inventory.length - 1];
+      const u1Text = `Check it out, just found a ${item.name} worth ${item.value} gold.`;
+      const u2Text = speaker2.persona.greed > 5
+        ? "Watch your back. Thieves will want that."
+        : "Not bad. Keep at it.";
+
+      const d1: Dialogue = { id: `d_${Date.now()}_1`, speakerId: speaker1.id, text: u1Text, timestamp: new Date().toLocaleTimeString() };
       setTimeout(() => {
         this.dialogues.push(d1);
         this.notify();
-        this.extractEventsFromDialogue(d1, intents1);
-        
         setTimeout(() => {
-          const d2: Dialogue = {
-            id: `d_${Date.now()}_2`,
-            speakerId: speaker2.id,
-            text: u2Text,
-            timestamp: new Date().toLocaleTimeString()
-          };
+          const d2: Dialogue = { id: `d_${Date.now()}_2`, speakerId: speaker2.id, text: u2Text, timestamp: new Date().toLocaleTimeString() };
           this.dialogues.push(d2);
           this.notify();
-          this.extractEventsFromDialogue(d2, intents2);
-        }, 2500); 
-        
+        }, 2500);
+      }, 500);
+      return;
+    }
+
+    // AI-generated dialogue
+    try {
+      const [u1Text, u2Text] = await Promise.all([
+        fetchAIDialogue({
+          character: speaker1.name,
+          otherCharacter: speaker2.name,
+          worldMood: this.state.globalMood,
+          faction: speaker1.faction,
+          role: speaker1.role,
+          trait: speaker1.persona.trait,
+          location,
+        }),
+        fetchAIDialogue({
+          character: speaker2.name,
+          otherCharacter: speaker1.name,
+          worldMood: this.state.globalMood,
+          faction: speaker2.faction,
+          role: speaker2.role,
+          trait: speaker2.persona.trait,
+          location,
+        }),
+      ]);
+
+      const d1: Dialogue = { id: `d_${Date.now()}_1`, speakerId: speaker1.id, text: u1Text, timestamp: new Date().toLocaleTimeString() };
+      this.dialogues.push(d1);
+      this.notify();
+
+      setTimeout(() => {
+        const d2: Dialogue = { id: `d_${Date.now()}_2`, speakerId: speaker2.id, text: u2Text, timestamp: new Date().toLocaleTimeString() };
+        this.dialogues.push(d2);
+        this.notify();
+      }, 2500);
+    } catch {
+      // Fallback to pool
+      const poolIndex = Math.floor(Math.random() * conversationPool.length);
+      const u1Text = conversationPool[poolIndex].text;
+      const u2Text = conversationPool[(poolIndex + 1) % conversationPool.length].text;
+
+      const d1: Dialogue = { id: `d_${Date.now()}_1`, speakerId: speaker1.id, text: u1Text, timestamp: new Date().toLocaleTimeString() };
+      setTimeout(() => {
+        this.dialogues.push(d1);
+        this.notify();
+        setTimeout(() => {
+          const d2: Dialogue = { id: `d_${Date.now()}_2`, speakerId: speaker2.id, text: u2Text, timestamp: new Date().toLocaleTimeString() };
+          this.dialogues.push(d2);
+          this.notify();
+        }, 2500);
       }, 500);
     }
   }
