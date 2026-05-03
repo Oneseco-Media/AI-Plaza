@@ -143,10 +143,16 @@ export default function PhaserGame() {
         const poiBg = this.add.graphics();
         poiBg.fillStyle(0x000000, 0.8);
         poiBg.lineStyle(1, 0xffaa00, 0.8);
-        poiBg.strokeRect(-25, -12, 50, 24);
-        poiBg.fillRect(-25, -12, 50, 24);
         
-        const poiText = this.add.text(0, 0, poi.name.substring(0, 6), {
+        // Measure text width to size background
+        const testText = this.add.text(0, 0, poi.name, { fontFamily: 'monospace', fontSize: '10px', fontStyle: 'bold' });
+        const textWidth = testText.width + 10; // 5px padding on each side
+        testText.destroy();
+
+        poiBg.strokeRect(-textWidth/2, -12, textWidth, 24);
+        poiBg.fillRect(-textWidth/2, -12, textWidth, 24);
+        
+        const poiText = this.add.text(0, 0, poi.name, {
           fontFamily: 'monospace', fontSize: '10px', color: '#ffaa00', fontStyle: 'bold'
         }).setOrigin(0.5);
 
@@ -157,7 +163,7 @@ export default function PhaserGame() {
 
       // Camera settings
       this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
-      this.cameras.main.setZoom(1.5);
+      this.cameras.main.setZoom(0.6);
 
       // Create particle emitter for weather
       const rainConfig = {
