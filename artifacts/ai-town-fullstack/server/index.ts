@@ -44,13 +44,13 @@ if (isProduction) {
   if (!fs.existsSync(distPath)) {
     throw new Error(`Build directory not found: ${distPath}. Run "pnpm build" first.`);
   }
-  app.use(basePath, express.static(distPath));
-  app.use(`${basePath}/*`, (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
-  });
-  // Also serve at root for convenience
-  app.use("/", express.static(distPath));
-  app.use("/*", (_req, res) => {
+
+  // Serve static assets
+  app.use(express.static(distPath));
+
+  // SPA fallback — catch-all middleware sends index.html for unmatched routes
+  // Using a plain middleware (no path pattern) avoids Express 5 path-to-regexp wildcard issues
+  app.use((_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 } else {

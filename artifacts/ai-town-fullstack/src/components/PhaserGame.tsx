@@ -58,10 +58,11 @@ export default function PhaserGame() {
     let acidRainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
     let dayNightOverlay: Phaser.GameObjects.Rectangle | null = null;
 
+    const assetBase = import.meta.env.BASE_URL;
     function preloadScene(this: Phaser.Scene) {
-      this.load.spritesheet('dude', '/dude.png', { frameWidth: 32, frameHeight: 48 });
-      this.load.spritesheet('desert', '/desert.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 1 });
-      this.load.image('tree', '/tree.png');
+      this.load.spritesheet('dude', `${assetBase}dude.png`, { frameWidth: 32, frameHeight: 48 });
+      this.load.spritesheet('desert', `${assetBase}desert.png`, { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 1 });
+      this.load.image('tree', `${assetBase}tree.png`);
       this.load.image('rain', 'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/rain.png');
     }
 
