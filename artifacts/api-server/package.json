@@ -12,10 +12,14 @@
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
+    "@workspace/integrations-openai-ai-server": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "openai": "^6.35.0",
+    "p-limit": "^7.3.0",
+    "p-retry": "^7.1.1",
     "pino": "^9",
     "pino-http": "^10"
   },
