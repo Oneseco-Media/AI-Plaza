@@ -271,6 +271,7 @@ class Engine {
         
         // Task Execution & Random Rolls
         if (c.task) {
+           const currentPoi = this.state.pois.find(p => p.x === c.x && p.y === c.y);
            // Roll a D10 + trait modifier
            const roll = Math.floor(Math.random() * 10) + 1;
            let success = false;
@@ -393,7 +394,6 @@ class Engine {
               this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+HP (Healed)`, color: '#00ff00' }, timestamp: '' });
            }
 
-           const currentPoi = this.state.pois.find(p => p.x === c.x && p.y === c.y);
            const districtName = currentPoi ? currentPoi.district : 'Neon Grid';
 
            this.emit({
