@@ -22,13 +22,12 @@ export default function PhaserGame() {
   useEffect(() => {
     if (!gameRef.current) return;
 
-      // Set exact width and height for game config to match full window
-      const config: Phaser.Types.Core.GameConfig = {
+    const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: window.innerWidth,
       height: window.innerHeight,
       parent: gameRef.current,
-      backgroundColor: "#0d1117", // darker gray
+      backgroundColor: "#88cc88", // Grass green
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -72,58 +71,29 @@ export default function PhaserGame() {
       // Floor pattern using desert tiles
       for (let x = 0; x < MAP_WIDTH; x++) {
         for (let y = 0; y < MAP_HEIGHT; y++) {
-          // Use sand tile (index 29 in tmw_desert)
-          const tileIndex = (Math.random() > 0.9) ? 30 : 29; // occasionally add a variation
+          // Use grass/path tiles to look more like Pokemon
+          // Using indices from the desert spritesheet but tinting them green for grass
+          const tileIndex = (Math.random() > 0.9) ? 30 : 29; 
           const tile = this.add.sprite(x * TILE_SIZE, y * TILE_SIZE, 'desert', tileIndex).setOrigin(0);
           
-          // Tint to fit our cyberpunk/neon palette slightly, or keep it original 16-bit
-          // We will tint the environment slightly blue/dark to keep the Cyberpunk vibe
-          tile.tint = 0x88aacc;
+          // Tint green for a lush, simple environment
+          tile.tint = 0x88cc88;
         }
       }
 
-      // Add a border around the world
+      // Add a simple border around the world
       const graphics = this.add.graphics();
-      graphics.lineStyle(4, 0x06b6d4, 0.5);
+      graphics.lineStyle(4, 0x88cc88, 0.5);
       graphics.strokeRect(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
 
-      // Add some random trees and neon poles for scenery
-      for (let i = 0; i < 60; i++) {
+      // Add some random trees for scenery
+      for (let i = 0; i < 40; i++) {
         const tx = Phaser.Math.Between(1, MAP_WIDTH - 2) * TILE_SIZE;
         const ty = Phaser.Math.Between(1, MAP_HEIGHT - 2) * TILE_SIZE;
         
-        // 50% chance of tree or random structural prop
-        if (Math.random() > 0.5) {
-           const tree = this.add.image(tx, ty, 'tree').setOrigin(0.5, 1);
-           tree.tint = Math.random() > 0.5 ? 0x66ccff : 0xff66cc; // neon tints
-           tree.setDepth(2);
-        } else {
-           // Draw a structural "neon pole" or "crates"
-           const prop = this.add.graphics();
-           const color = [0x00ffff, 0xff00ff, 0xffff00][Math.floor(Math.random()*3)];
-           prop.fillStyle(0x222222, 1);
-           prop.lineStyle(1, color, 0.8);
-           
-           if (Math.random() > 0.5) {
-              // Create crate stack
-              prop.fillRect(tx, ty - 16, 16, 16);
-              prop.strokeRect(tx, ty - 16, 16, 16);
-              if (Math.random() > 0.5) {
-                prop.fillRect(tx - 8, ty, 16, 16);
-                prop.strokeRect(tx - 8, ty, 16, 16);
-                prop.fillRect(tx + 8, ty, 16, 16);
-                prop.strokeRect(tx + 8, ty, 16, 16);
-              }
-           } else {
-              // Create neon pole/antenna
-              prop.fillStyle(color, 1);
-              prop.fillRect(tx, ty - 32, 4, 32);
-              // glow effect
-              prop.lineStyle(4, color, 0.3);
-              prop.strokeRect(tx, ty - 32, 4, 32);
-           }
-           prop.setDepth(1);
-        }
+        // Minimalist trees
+        const tree = this.add.image(tx, ty, 'tree').setOrigin(0.5, 1);
+        tree.setDepth(2);
       }
 
       // Create animations
@@ -164,8 +134,8 @@ export default function PhaserGame() {
         const bHeight = poi.type === 'Corp' ? 4 : poi.type === 'Hideout' ? 2 : poi.type === 'Shop' ? 2 : 2;
         
         const building = this.add.graphics();
-        building.fillStyle(poi.type === 'Corp' ? 0x112233 : poi.type === 'Bar' ? 0x331122 : poi.type === 'Shop' ? 0x113311 : 0x222222, 1);
-        building.lineStyle(2, poi.type === 'Corp' ? 0x00ffff : poi.type === 'Bar' ? 0xff00ff : poi.type === 'Shop' ? 0x00ffaa : 0xaaaaaa, 1);
+        building.fillStyle(0xffffff, 0.9); // Clean white buildings
+        building.lineStyle(2, 0xaaaaaa, 1); // Subtle grey border
         
         // Draw building centered on POI but occupying multiple tiles
         building.fillRect(poi.x * TILE_SIZE - (bWidth * TILE_SIZE)/2 + TILE_SIZE/2, poi.y * TILE_SIZE - (bHeight * TILE_SIZE)/2 + TILE_SIZE/2, bWidth * TILE_SIZE, bHeight * TILE_SIZE);
@@ -173,19 +143,19 @@ export default function PhaserGame() {
         building.setDepth(1);
 
         const poiBg = this.add.graphics();
-        poiBg.fillStyle(0x000000, 0.8);
-        poiBg.lineStyle(1, 0xffaa00, 0.8);
+        poiBg.fillStyle(0xffffff, 0.9); // White background for tags
+        poiBg.lineStyle(1, 0xdddddd, 1); // Subtle border
         
         // Measure text width to size background
-        const testText = this.add.text(0, 0, poi.name, { fontFamily: 'monospace', fontSize: '10px', fontStyle: 'bold' });
+        const testText = this.add.text(0, 0, poi.name, { fontFamily: 'sans-serif', fontSize: '10px', fontStyle: 'bold' });
         const textWidth = testText.width + 10; // 5px padding on each side
         testText.destroy();
 
-        poiBg.strokeRect(-textWidth/2, -12, textWidth, 24);
-        poiBg.fillRect(-textWidth/2, -12, textWidth, 24);
+        poiBg.fillRoundedRect(-textWidth/2, -12, textWidth, 24, 4); // Rounded rects for a softer look
+        poiBg.strokeRoundedRect(-textWidth/2, -12, textWidth, 24, 4);
         
         const poiText = this.add.text(0, 0, poi.name, {
-          fontFamily: 'monospace', fontSize: '10px', color: '#ffaa00', fontStyle: 'bold'
+          fontFamily: 'sans-serif', fontSize: '10px', color: '#333333', fontStyle: 'bold'
         }).setOrigin(0.5);
 
         const container = this.add.container(poi.x * TILE_SIZE + TILE_SIZE/2, poi.y * TILE_SIZE + TILE_SIZE/2, [poiBg, poiText]);
@@ -202,59 +172,10 @@ export default function PhaserGame() {
       // Calculate a zoom level that covers the screen entirely
       const zoomX = screenW / mapPixelW;
       const zoomY = screenH / mapPixelH;
-      const targetZoom = Math.max(zoomX, zoomY, 0.6); // Take the larger to cover screen, min 0.6
+      const targetZoom = Math.max(zoomX, zoomY, 1.2); // Zoom in closer for Pokemon style
       
       this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
       this.cameras.main.setZoom(targetZoom);
-
-      // Create particle emitter for weather
-      const rainConfig = {
-        x: { min: 0, max: MAP_WIDTH * TILE_SIZE },
-        y: 0,
-        lifespan: 2000,
-        speedY: { min: 200, max: 400 },
-        speedX: { min: -50, max: -20 },
-        scale: { start: 0.4, end: 0.1 },
-        quantity: 2,
-        blendMode: 'ADD' as const
-      };
-
-      const rainParticles = this.add.particles(0, 0, 'rain', rainConfig);
-      rainParticles.setDepth(50);
-      rainParticles.stop(); // default stopped
-      rainEmitter = rainParticles;
-
-      const acidRainParticles = this.add.particles(0, 0, 'rain', {
-        ...rainConfig,
-        tint: 0x00ff00
-      });
-      acidRainParticles.setDepth(50);
-      acidRainParticles.stop();
-      acidRainEmitter = acidRainParticles;
-      
-      // Setup day/night overlay
-      dayNightOverlay = this.add.rectangle(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, 0x000033);
-      dayNightOverlay.setOrigin(0);
-      dayNightOverlay.setDepth(40);
-      dayNightOverlay.setAlpha(0); // Day time default
-      dayNightOverlay.setBlendMode(Phaser.BlendModes.MULTIPLY);
-
-      // Add a smog emitter
-      const smogParticles = this.add.particles(0, 0, 'rain', {
-        x: { min: 0, max: MAP_WIDTH * TILE_SIZE },
-        y: { min: 0, max: MAP_HEIGHT * TILE_SIZE },
-        lifespan: 5000,
-        speedY: { min: -10, max: 10 },
-        speedX: { min: 20, max: 50 },
-        scale: { start: 2, end: 4 },
-        quantity: 1,
-        alpha: { start: 0.1, end: 0 },
-        tint: 0x555555,
-        blendMode: 'SCREEN'
-      });
-      smogParticles.setDepth(45);
-      smogParticles.stop();
-      (this as any).smogEmitter = smogParticles;
     }
 
     function showSpeechBubble(scene: Phaser.Scene, charId: string, text: string) {
@@ -267,26 +188,25 @@ export default function PhaserGame() {
 
       const bubbleWidth = 180;
       const content = scene.add.text(0, -30, text, {
-        fontFamily: 'monospace', fontSize: '11px', color: '#fff', align: 'center', wordWrap: { width: bubbleWidth - 10 },
-        stroke: '#000', strokeThickness: 3
+        fontFamily: 'sans-serif', fontSize: '11px', color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - 10 }
       }).setOrigin(0.5);
 
       const bubbleHeight = content.height + 15;
       content.y = -bubbleHeight / 2;
 
       const bubble = scene.add.graphics({ x: 0, y: 0 });
-      bubble.fillStyle(0x000000, 0.7);
-      bubble.lineStyle(2, 0x06b6d4, 1);
+      bubble.fillStyle(0xffffff, 0.9);
+      bubble.lineStyle(2, 0xaaaaaa, 1);
       
       // Bubble shape
       bubble.fillRoundedRect(-bubbleWidth/2, -bubbleHeight, bubbleWidth, bubbleHeight, 8);
       bubble.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight, bubbleWidth, bubbleHeight, 8);
       
       // Little triangle pointer
-      bubble.fillStyle(0x000000, 0.7);
+      bubble.fillStyle(0xffffff, 0.9);
       bubble.fillTriangle(-5, 0, 5, 0, 0, 10);
-      bubble.lineStyle(2, 0x06b6d4, 1);
-      bubble.strokeTriangle(-5, 0, 5, 0, 0, 10); // this overlaps but works well enough for mockup
+      bubble.lineStyle(2, 0xaaaaaa, 1);
+      bubble.strokeTriangle(-5, 0, 5, 0, 0, 10);
 
       const container = scene.add.container(sprite.x, sprite.y - TILE_SIZE, [bubble, content]);
       container.setDepth(100);
@@ -316,8 +236,8 @@ export default function PhaserGame() {
       }
 
       const floatText = scene.add.text(sprite.x, sprite.y - 20, text, {
-        fontFamily: 'monospace', fontSize: '10px', color: color,
-        stroke: '#000', strokeThickness: 2, fontStyle: 'bold'
+        fontFamily: 'sans-serif', fontSize: '11px', color: color,
+        stroke: '#ffffff', strokeThickness: 2, fontStyle: 'bold'
       }).setOrigin(0.5);
 
       floatText.setDepth(110);
@@ -488,9 +408,9 @@ export default function PhaserGame() {
          
          {/* Top HUD */}
          <div className="flex justify-between items-start">
-            <div className="bg-black/60 backdrop-blur-md border border-cyan-900/50 p-4 rounded-md shadow-2xl pointer-events-auto w-64">
-               <h1 className="text-xl font-display text-primary glitch-text tracking-widest uppercase">Nexus World</h1>
-               <div className="mt-2 space-y-1 font-mono text-xs">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg pointer-events-auto w-64">
+               <h1 className="text-xl font-bold text-gray-800 tracking-wide">Pokémon World</h1>
+               <div className="mt-2 space-y-1 font-sans text-xs">
                  <div className="flex justify-between">
                    <span className="text-muted-foreground">TURN</span>
                    <span className="text-white">{engineState.world.turn}</span>
@@ -517,17 +437,17 @@ export default function PhaserGame() {
             </div>
 
             {/* Event Log */}
-            <div className="bg-black/60 backdrop-blur-md border border-accent/30 p-3 rounded-md shadow-2xl pointer-events-auto w-80 h-48 flex flex-col mt-4">
-               <h2 className="font-display text-sm text-accent mb-2 uppercase tracking-wide border-b border-accent/20 pb-1">Event Log</h2>
-               <div className="overflow-y-auto font-mono text-[10px] space-y-1 flex-1 terminal-scroll pr-1 flex flex-col-reverse">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-3 rounded-xl shadow-lg pointer-events-auto w-80 h-48 flex flex-col mt-4">
+               <h2 className="font-bold text-sm text-gray-700 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">Event Log</h2>
+               <div className="overflow-y-auto font-sans text-[10px] space-y-1 flex-1 pr-1 flex flex-col-reverse">
                  {engineState.events.map((e, i) => (
                     <div key={e.id} className="opacity-80">
-                      <span className="text-muted-foreground mr-1">[{e.timestamp}]</span>
+                      <span className="text-gray-400 mr-1">[{e.timestamp}]</span>
                       <span className={`
-                        ${e.type === 'SYSTEM_ALERT' ? 'text-destructive-foreground' : 
-                          e.type === 'TERRITORY_SHIFT' ? 'text-primary' : 
-                          e.type === 'TASK_COMPLETED' ? 'text-yellow-400' :
-                          'text-accent'}
+                        ${e.type === 'SYSTEM_ALERT' ? 'text-red-500 font-bold' : 
+                          e.type === 'TERRITORY_SHIFT' ? 'text-blue-500' : 
+                          e.type === 'TASK_COMPLETED' ? 'text-green-500' :
+                          'text-gray-800'}
                       `}>{e.description}</span>
                     </div>
                  ))}
@@ -536,85 +456,79 @@ export default function PhaserGame() {
          </div>
 
          {/* Right Side HUD - Districts & Characters */}
-         <div className="flex flex-col items-end gap-4 pointer-events-auto h-full overflow-y-auto max-h-[80vh] terminal-scroll">
-            <div className="bg-black/60 backdrop-blur-md border border-fuchsia-900/50 p-4 rounded-md shadow-2xl w-72">
-               <h2 className="text-sm font-display text-fuchsia-400 uppercase tracking-widest border-b border-fuchsia-900/50 pb-1 mb-2">District Status</h2>
-               <div className="space-y-3 font-mono text-xs">
+         <div className="flex flex-col items-end gap-4 pointer-events-auto h-full overflow-y-auto max-h-[80vh] pb-8 pr-2">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Area Status</h2>
+               <div className="space-y-3 font-sans text-xs">
                  {Object.entries(engineState.world.districts).map(([name, data]) => (
-                   <div key={name} className="flex flex-col border-b border-fuchsia-900/20 pb-2 last:border-0">
-                     <div className="flex justify-between text-white">
+                   <div key={name} className="flex flex-col border-b border-gray-100 pb-2 last:border-0">
+                     <div className="flex justify-between text-gray-800">
                        <span className="font-bold">{name}</span>
-                       <span className={data.tension > 60 ? 'text-red-400' : 'text-green-400'}>{data.tension}% Tension</span>
+                       <span className={data.tension > 60 ? 'text-red-500' : 'text-green-500'}>{data.tension}% Tension</span>
                      </div>
-                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
-                       <span>Control: {data.control}</span>
+                     <div className="flex justify-between text-gray-500 mt-1 text-[10px]">
+                       <span>Dominant Type: {data.control}</span>
                      </div>
                    </div>
                  ))}
                </div>
             </div>
 
-            <div className="bg-black/60 backdrop-blur-md border border-orange-900/50 p-4 rounded-md shadow-2xl w-72">
-               <h2 className="text-sm font-display text-orange-400 uppercase tracking-widest border-b border-orange-900/50 pb-1 mb-2">Factions & POIs</h2>
-               <div className="space-y-3 font-mono text-xs mb-4">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-orange-500 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Teams & POIs</h2>
+               <div className="space-y-3 font-sans text-xs mb-4">
                  {Object.entries(engineState.world.factions).map(([name, data]) => (
-                   <div key={name} className="flex flex-col border-b border-orange-900/20 pb-2 last:border-0">
-                     <div className="flex justify-between text-white">
+                   <div key={name} className="flex flex-col border-b border-gray-100 pb-2 last:border-0">
+                     <div className="flex justify-between text-gray-800">
                        <span className="font-bold">{name}</span>
-                       <span className="text-orange-400">Power: {data.power}</span>
+                       <span className="text-orange-500">Power: {data.power}</span>
                      </div>
-                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
+                     <div className="flex justify-between text-gray-500 mt-1 text-[10px]">
                        <span>Leader: {data.leader}</span>
                      </div>
                    </div>
                  ))}
                </div>
                
-               <h3 className="text-xs font-display text-yellow-400/80 uppercase border-b border-yellow-900/50 pb-1 mb-2">Locations</h3>
-               <div className="grid grid-cols-2 gap-2 font-mono text-[10px] text-muted-foreground">
+               <h3 className="text-xs font-bold text-gray-600 uppercase border-b border-gray-200 pb-1 mb-2">Locations</h3>
+               <div className="grid grid-cols-2 gap-2 font-sans text-[10px] text-gray-600">
                  {engineState.world.pois.map(poi => (
-                   <div key={poi.id} className="flex justify-between items-center bg-black/40 p-1 border border-yellow-900/20 rounded">
-                     <span className="truncate" title={poi.name}>{poi.name}</span>
-                     <span className="text-yellow-500/70 ml-1">[{poi.x},{poi.y}]</span>
+                   <div key={poi.id} className="flex justify-between items-center bg-gray-100 p-1.5 border border-gray-200 rounded-md">
+                     <span className="truncate font-semibold" title={poi.name}>{poi.name}</span>
+                     <span className="text-gray-400 ml-1">[{poi.x},{poi.y}]</span>
                    </div>
                  ))}
                </div>
             </div>
 
-            <div className="bg-black/60 backdrop-blur-md border border-green-900/50 p-4 rounded-md shadow-2xl w-72">
-               <h2 className="text-sm font-display text-green-400 uppercase tracking-widest border-b border-green-900/50 pb-1 mb-2">Agents</h2>
-               <div className="space-y-3 font-mono text-xs">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-green-600 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Trainers</h2>
+               <div className="space-y-3 font-sans text-xs">
                  {engineState.chars.map(c => (
-                   <div key={c.id} className="flex flex-col border-b border-green-900/20 pb-2 last:border-0">
-                     <div className="flex justify-between text-white items-center">
+                   <div key={c.id} className="flex flex-col border-b border-gray-100 pb-3 last:border-0">
+                     <div className="flex justify-between text-gray-800 items-center">
                        <span className="font-bold flex items-center gap-1" style={{color: `#${c.color.toString(16)}`}}>
                          {c.name}
-                         <span className="text-[8px] bg-black/50 px-1 rounded uppercase tracking-wider">{c.role}</span>
+                         <span className="text-[9px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">{c.role}</span>
                        </span>
-                       <span className="text-[10px] text-muted-foreground">{c.persona.trait}</span>
+                       <span className="text-[10px] text-gray-500">{c.persona.trait}</span>
                      </div>
-                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
+                     <div className="flex justify-between text-gray-600 mt-1.5 text-[10px]">
                        <span>Status: {c.action}</span>
                        <div className="flex gap-2 text-right">
-                         <span className="text-yellow-400/80">${c.credits}</span>
-                         {c.bounty > 0 && <span className="text-red-500 font-bold">Bounty: ${c.bounty}</span>}
+                         <span className="text-yellow-600 font-bold">₽{c.credits}</span>
                        </div>
                      </div>
-                     {c.equipped && (
-                       <div className="text-[9px] text-cyan-400 mt-1">
-                         Equipped: {c.equipped}
-                       </div>
-                     )}
-                     <div className="w-full bg-black/40 h-1 mt-1 flex rounded overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{width: `${c.energy}%`}} />
+                     <div className="w-full bg-gray-200 h-1.5 mt-2 flex rounded-full overflow-hidden">
+                        <div className="bg-blue-400 h-full" style={{width: `${c.energy}%`}} />
                      </div>
-                     <div className="w-full bg-black/40 h-1 mt-0.5 flex rounded overflow-hidden">
-                        <div className="bg-red-500 h-full" style={{width: `${c.health}%`}} />
+                     <div className="w-full bg-gray-200 h-1.5 mt-1 flex rounded-full overflow-hidden">
+                        <div className="bg-red-400 h-full" style={{width: `${c.health}%`}} />
                      </div>
                      {c.inventory.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="flex flex-wrap gap-1 mt-2">
                           {c.inventory.map(item => (
-                             <span key={item.id} className="text-[8px] bg-primary/20 text-primary px-1 py-0.5 rounded border border-primary/30">
+                             <span key={item.id} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200">
                                {item.name}
                              </span>
                           ))}
