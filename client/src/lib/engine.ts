@@ -8,6 +8,14 @@ export type PointOfInterest = {
   type: 'Bar' | 'Shop' | 'Corp' | 'Hideout';
 };
 
+export type Persona = {
+  trait: string;
+  aggressiveness: number; // 1-10
+  sociability: number; // 1-10
+  greed: number; // 1-10
+  curiosity: number; // 1-10
+};
+
 export type WorldState = {
   globalMood: 'Tense' | 'Peaceful' | 'Chaotic' | 'Optimistic' | 'Suspicious';
   districts: Record<string, { control: string; tension: number; description: string }>;
@@ -30,7 +38,7 @@ export type Event = {
 export type Character = {
   id: string;
   name: string;
-  personality: string;
+  persona: Persona;
   color: number; // Hex color for Phaser
   x: number;
   y: number;
@@ -38,6 +46,7 @@ export type Character = {
   targetY: number;
   energy: number; // 0-100
   action: string;
+  task: string | null;
   credits: number;
 };
 
@@ -78,10 +87,10 @@ export const initialWorldState: WorldState = {
 
 // Map size 40x30, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', personality: 'Rebellious hacker', color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', credits: 1500 },
-  { id: 'c2', name: 'Cipher', personality: 'Calculated info-broker', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', credits: 8000 },
-  { id: 'c3', name: 'Krieg', personality: 'Ruthless warlord', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', credits: 450 },
-  { id: 'c4', name: 'Vance', personality: 'Cold corporate director', color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', credits: 50000 }
+  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 1500 },
+  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 8000 },
+  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', task: null, credits: 450 },
+  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', task: null, credits: 50000 }
 ];
 
 // Mock Conversational Data
@@ -165,8 +174,55 @@ class Engine {
         return;
       }
 
-      // If reached target, pick new target
+      // If reached target, pick new target or execute task
       if (c.x === c.targetX && c.y === c.targetY) {
+        
+        // Task Execution & Random Rolls
+        if (c.task) {
+           // Roll a D10 + trait modifier
+           const roll = Math.floor(Math.random() * 10) + 1;
+           let success = false;
+           let outcomeMsg = "";
+
+           if (c.task === 'Scavenging') {
+              success = (roll + c.persona.curiosity) > 12;
+              if (success) {
+                 const found = Math.floor(Math.random() * 500) + 100;
+                 c.credits += found;
+                 outcomeMsg = `Found ${found} creds.`;
+              } else {
+                 outcomeMsg = `Found nothing.`;
+              }
+           } else if (c.task === 'Extorting') {
+              success = (roll + c.persona.aggressiveness) > 10;
+              if (success) {
+                 c.credits += 1000;
+                 outcomeMsg = `Intimidated locals for 1000 creds.`;
+              } else {
+                 outcomeMsg = `Locals resisted.`;
+                 c.energy -= 20; // lost a scuffle
+              }
+           } else if (c.task === 'Trading') {
+              success = (roll + c.persona.sociability) > 11;
+              if (success) {
+                 c.credits += 800;
+                 outcomeMsg = `Good deal made.`;
+              } else {
+                 outcomeMsg = `Market was dry.`;
+              }
+           }
+
+           this.emit({
+             id: `ev_${Date.now()}_${Math.random()}`,
+             type: 'SYSTEM_ALERT',
+             description: `${c.name} finished ${c.task}. Roll: ${roll}. ${outcomeMsg}`,
+             payload: { char: c.name, task: c.task, roll, success },
+             timestamp: new Date().toLocaleTimeString()
+           });
+
+           c.task = null; // Task complete
+        }
+
         c.action = 'Idle';
         
         // If close to each other, maybe stay to chat?
@@ -177,17 +233,28 @@ class Engine {
 
         const distToClosest = Math.abs(closestChar.x - c.x) + Math.abs(closestChar.y - c.y);
 
-        if (distToClosest < 8 && distToClosest > 2 && Math.random() > 0.6) {
-          // move towards other char
+        if (distToClosest < 8 && distToClosest > 2 && Math.random() > (10 - c.persona.sociability) / 10) {
+          // Sociable characters more likely to approach
           c.targetX = Math.max(0, Math.min(39, c.x + (closestChar.x > c.x ? 1 : closestChar.x < c.x ? -1 : 0)));
           c.targetY = Math.max(0, Math.min(29, c.y + (closestChar.y > c.y ? 1 : closestChar.y < c.y ? -1 : 0)));
           c.action = 'Approaching';
-        } else if (Math.random() > 0.7) {
-          // visit a POI
+        } else if (Math.random() > 0.6) {
+          // Pick a random task based on persona
           const randomPoi = this.state.pois[Math.floor(Math.random() * this.state.pois.length)];
           c.targetX = randomPoi.x;
           c.targetY = randomPoi.y;
-          c.action = `Heading to ${randomPoi.name}`;
+          
+          // Assign task based on highest trait or randomness
+          if (c.persona.aggressiveness > 7 && Math.random() > 0.5) {
+            c.task = 'Extorting';
+            c.action = `Heading to ${randomPoi.name} to Extort`;
+          } else if (c.persona.curiosity > 7 && Math.random() > 0.5) {
+            c.task = 'Scavenging';
+            c.action = `Heading to ${randomPoi.name} to Scavenge`;
+          } else {
+            c.task = 'Trading';
+            c.action = `Heading to ${randomPoi.name} to Trade`;
+          }
         } else {
           // random walk 1-3 tiles
           const dir = Math.floor(Math.random() * 4);
