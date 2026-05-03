@@ -52,11 +52,13 @@ export default function PhaserGame() {
     let currentDialogues: Set<string> = new Set();
     
     let currentScene: Phaser.Scene;
+    let rainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
 
     function preloadScene(this: Phaser.Scene) {
       this.load.spritesheet('dude', '/dude.png', { frameWidth: 32, frameHeight: 48 });
       this.load.spritesheet('desert', '/desert.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 1 });
       this.load.image('tree', '/tree.png');
+      this.load.image('rain', 'https://raw.githubusercontent.com/photonstorm/phaser3-examples/master/public/assets/sprites/rain.png');
     }
 
     function createScene(this: Phaser.Scene) {
@@ -122,6 +124,21 @@ export default function PhaserGame() {
       // Camera settings
       this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
       this.cameras.main.setZoom(1.5);
+
+      // Create particle emitter for weather
+      const rainParticles = this.add.particles(0, 0, 'rain', {
+        x: { min: 0, max: MAP_WIDTH * TILE_SIZE },
+        y: 0,
+        lifespan: 2000,
+        speedY: { min: 200, max: 400 },
+        speedX: { min: -50, max: -20 },
+        scale: { start: 0.4, end: 0.1 },
+        quantity: 2,
+        blendMode: 'ADD'
+      });
+      rainParticles.setDepth(50);
+      rainParticles.stop(); // default stopped
+      rainEmitter = rainParticles;
     }
 
     function showSpeechBubble(scene: Phaser.Scene, charId: string, text: string) {
@@ -179,6 +196,29 @@ export default function PhaserGame() {
       let midX = 0;
       let midY = 0;
       let charCount = 0;
+
+      // Update ambient light based on time of day (0-23)
+      const hour = engineState.world.timeOfDay;
+      let brightness = 1;
+      if (hour >= 20 || hour <= 5) brightness = 0.3; // Night
+      else if (hour === 6 || hour === 19) brightness = 0.6; // Dusk/Dawn
+      else brightness = 1.0; // Day
+      
+      this.cameras.main.setAlpha(brightness);
+
+      // Handle weather effects
+      if (rainEmitter) {
+        if (engineState.world.weather === 'Rain' || engineState.world.weather === 'Acid Rain') {
+          if (!rainEmitter.active) rainEmitter.start();
+          if (engineState.world.weather === 'Acid Rain') {
+             rainEmitter.setTint(0x00ff00);
+          } else {
+             rainEmitter.setTint(0xffffff);
+          }
+        } else {
+          rainEmitter.stop();
+        }
+      }
 
       worldEngine.chars.forEach(c => {
         if (sprites[c.id]) {
@@ -289,11 +329,21 @@ export default function PhaserGame() {
                    <span className="text-muted-foreground">RELATIONSHIP</span>
                    <span className="text-white">{engineState.world.relationships['Neon:Cipher']}%</span>
                  </div>
+                 <div className="flex justify-between">
+                   <span className="text-muted-foreground">TIME</span>
+                   <span className="text-white">{engineState.world.timeOfDay.toString().padStart(2, '0')}:00</span>
+                 </div>
+                 <div className="flex justify-between">
+                   <span className="text-muted-foreground">WEATHER</span>
+                   <span className={engineState.world.weather === 'Acid Rain' ? 'text-green-400' : 'text-white'}>
+                     {engineState.world.weather}
+                   </span>
+                 </div>
                </div>
             </div>
 
             {/* Event Log */}
-            <div className="bg-black/60 backdrop-blur-md border border-accent/30 p-3 rounded-md shadow-2xl pointer-events-auto w-80 h-48 flex flex-col">
+            <div className="bg-black/60 backdrop-blur-md border border-accent/30 p-3 rounded-md shadow-2xl pointer-events-auto w-80 h-48 flex flex-col mt-4">
                <h2 className="font-display text-sm text-accent mb-2 uppercase tracking-wide border-b border-accent/20 pb-1">Event Log</h2>
                <div className="overflow-y-auto font-mono text-[10px] space-y-1 flex-1 terminal-scroll pr-1 flex flex-col-reverse">
                  {engineState.events.map((e, i) => (
@@ -305,6 +355,61 @@ export default function PhaserGame() {
                           'text-accent'}
                       `}>{e.description}</span>
                     </div>
+                 ))}
+               </div>
+            </div>
+         </div>
+
+         {/* Right Side HUD - Districts & Characters */}
+         <div className="flex flex-col items-end gap-4 pointer-events-auto h-full overflow-y-auto max-h-[80vh] terminal-scroll">
+            <div className="bg-black/60 backdrop-blur-md border border-fuchsia-900/50 p-4 rounded-md shadow-2xl w-72">
+               <h2 className="text-sm font-display text-fuchsia-400 uppercase tracking-widest border-b border-fuchsia-900/50 pb-1 mb-2">District Status</h2>
+               <div className="space-y-3 font-mono text-xs">
+                 {Object.entries(engineState.world.districts).map(([name, data]) => (
+                   <div key={name} className="flex flex-col border-b border-fuchsia-900/20 pb-2 last:border-0">
+                     <div className="flex justify-between text-white">
+                       <span className="font-bold">{name}</span>
+                       <span className={data.tension > 60 ? 'text-red-400' : 'text-green-400'}>{data.tension}% Tension</span>
+                     </div>
+                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
+                       <span>Control: {data.control}</span>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-md border border-orange-900/50 p-4 rounded-md shadow-2xl w-72">
+               <h2 className="text-sm font-display text-orange-400 uppercase tracking-widest border-b border-orange-900/50 pb-1 mb-2">Factions</h2>
+               <div className="space-y-3 font-mono text-xs">
+                 {Object.entries(engineState.world.factions).map(([name, data]) => (
+                   <div key={name} className="flex flex-col border-b border-orange-900/20 pb-2 last:border-0">
+                     <div className="flex justify-between text-white">
+                       <span className="font-bold">{name}</span>
+                       <span className="text-orange-400">Power: {data.power}</span>
+                     </div>
+                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
+                       <span>Leader: {data.leader}</span>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-md border border-green-900/50 p-4 rounded-md shadow-2xl w-72">
+               <h2 className="text-sm font-display text-green-400 uppercase tracking-widest border-b border-green-900/50 pb-1 mb-2">Agents</h2>
+               <div className="space-y-3 font-mono text-xs">
+                 {engineState.chars.map(c => (
+                   <div key={c.id} className="flex flex-col border-b border-green-900/20 pb-2 last:border-0">
+                     <div className="flex justify-between text-white">
+                       <span className="font-bold" style={{color: `#${c.color.toString(16)}`}}>{c.name}</span>
+                       <span>Energy: {c.energy}%</span>
+                     </div>
+                     <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
+                       <span>Status: {c.action}</span>
+                       <span>Loc: [{c.x}, {c.y}]</span>
+                     </div>
+                   </div>
                  ))}
                </div>
             </div>
