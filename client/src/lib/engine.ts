@@ -37,7 +37,7 @@ export type WorldState = {
 
 export type Event = {
   id: string;
-  type: 'MOOD_CHANGE' | 'TERRITORY_SHIFT' | 'FACTION_POWER' | 'RELATIONSHIP_UPDATE' | 'SYSTEM_ALERT' | 'TASK_COMPLETED';
+  type: 'MOOD_CHANGE' | 'TERRITORY_SHIFT' | 'FACTION_POWER' | 'RELATIONSHIP_UPDATE' | 'SYSTEM_ALERT' | 'TASK_COMPLETED' | 'FLOATING_TEXT';
   description: string;
   payload: any;
   timestamp: string;
@@ -47,12 +47,14 @@ export type Character = {
   id: string;
   name: string;
   persona: Persona;
+  faction: string | null;
   color: number; // Hex color for Phaser
   x: number;
   y: number;
   targetX: number;
   targetY: number;
   energy: number; // 0-100
+  health: number; // 0-100
   action: string;
   task: string | null;
   credits: number;
@@ -96,10 +98,10 @@ export const initialWorldState: WorldState = {
 
 // Map size 40x30, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 1500, inventory: [] },
-  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 8000, inventory: [] },
-  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', task: null, credits: 450, inventory: [] },
-  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', task: null, credits: 50000, inventory: [] }
+  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, faction: null, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 1500, inventory: [] },
+  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, faction: 'Synapse Cartel', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 8000, inventory: [] },
+  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, faction: 'Scrap Barons', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 450, inventory: [] },
+  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, faction: 'CorpSec', color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, health: 100, action: 'Idle', task: null, credits: 50000, inventory: [] }
 ];
 
 // Mock Conversational Data
@@ -170,16 +172,24 @@ class Engine {
   private updateCharacterPositions() {
     // Basic random walk
     this.chars.forEach(c => {
-      // Energy management
-      if (c.energy <= 0) {
-        c.action = 'Resting';
-        c.energy += 10;
+      // Energy/Health management
+      if (c.energy <= 0 || c.health <= 0) {
+        if (c.health <= 0 && c.action !== 'Incapsulated / Healing') {
+           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `INCAPACITATED`, color: '#ff0000' }, timestamp: '' });
+        }
+        c.action = c.health <= 0 ? 'Incapsulated / Healing' : 'Resting';
+        c.energy = Math.min(100, c.energy + 10);
+        c.health = Math.min(100, c.health + 10);
         return; // Skip movement if resting
       }
 
-      if (c.action === 'Resting' && c.energy < 100) {
-        c.energy += 10;
-        if (c.energy >= 100) c.action = 'Idle';
+      if ((c.action === 'Resting' || c.action === 'Incapsulated / Healing') && (c.energy < 100 || c.health < 100)) {
+        c.energy = Math.min(100, c.energy + 10);
+        c.health = Math.min(100, c.health + 10);
+        if (c.energy >= 100 && c.health >= 100) {
+           c.action = 'Idle';
+           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Recovered`, color: '#00ff00' }, timestamp: '' });
+        }
         return;
       }
 
@@ -193,12 +203,19 @@ class Engine {
            let success = false;
            let outcomeMsg = "";
 
+           // Item bonuses
+           const hasWeapon = c.inventory.some(i => i.type === 'Weapon');
+           const hasTech = c.inventory.some(i => i.type === 'Tech');
+
            if (c.task === 'Scavenging') {
-              success = (roll + c.persona.curiosity) > 12;
+              let bonus = hasTech ? 3 : 0;
+              success = (roll + c.persona.curiosity + bonus) > 12;
               if (success) {
                  const found = Math.floor(Math.random() * 500) + 100;
                  c.credits += found;
                  
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${found} Cr`, color: '#00ff00' }, timestamp: '' });
+
                  // Chance to find a physical item when scavenging
                  if (Math.random() > 0.7) {
                     const itemTypes: InventoryItem['type'][] = ['Scrap', 'Tech', 'Weapon'];
@@ -210,28 +227,51 @@ class Engine {
                     };
                     c.inventory.push(newItem);
                     outcomeMsg = `Found ${found} creds and a ${newItem.name}.`;
+                    
+                    setTimeout(() => {
+                       this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${newItem.name}`, color: '#00ffff' }, timestamp: '' });
+                    }, 500);
+
                  } else {
                     outcomeMsg = `Found ${found} creds.`;
                  }
               } else {
                  outcomeMsg = `Found nothing.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Scavenge Failed`, color: '#aaaaaa' }, timestamp: '' });
               }
            } else if (c.task === 'Extorting') {
-              success = (roll + c.persona.aggressiveness) > 10;
+              let bonus = hasWeapon ? 3 : 0;
+              success = (roll + c.persona.aggressiveness + bonus) > 10;
               if (success) {
                  c.credits += 1000;
-                 outcomeMsg = `Intimidated locals for 1000 creds.`;
+                 outcomeMsg = `Intimidated locals for 1000 creds${bonus ? ' (weapon bonus)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 Cr`, color: '#00ff00' }, timestamp: '' });
               } else {
                  outcomeMsg = `Locals resisted.`;
-                 c.energy -= 20; // lost a scuffle
+                 c.health -= 15; // lost a scuffle
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-15 HP`, color: '#ff0000' }, timestamp: '' });
               }
            } else if (c.task === 'Trading') {
               success = (roll + c.persona.sociability) > 11;
               if (success) {
                  c.credits += 800;
                  outcomeMsg = `Good deal made.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 Cr`, color: '#00ff00' }, timestamp: '' });
               } else {
                  outcomeMsg = `Market was dry.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Trade Failed`, color: '#aaaaaa' }, timestamp: '' });
+              }
+           } else if (c.task === 'Robbing') {
+              let bonus = hasWeapon ? 3 : 0;
+              success = (roll + c.persona.aggressiveness + bonus) > 12;
+              if (success) {
+                 c.credits += 500;
+                 outcomeMsg = `Successfully mugged a target for 500 creds${bonus ? ' (weapon bonus)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 Cr`, color: '#00ff00' }, timestamp: '' });
+              } else {
+                 c.health -= 25;
+                 outcomeMsg = `Target fought back. Lost health.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-25 HP`, color: '#ff0000' }, timestamp: '' });
               }
            }
 
@@ -259,7 +299,12 @@ class Engine {
 
         const distToClosest = Math.abs(closestChar.x - c.x) + Math.abs(closestChar.y - c.y);
 
-        if (distToClosest < 8 && distToClosest > 2 && Math.random() > (10 - c.persona.sociability) / 10) {
+        // Check for robbery if close enough
+        if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8) {
+           c.action = `Robbing ${closestChar.name}`;
+           c.task = 'Robbing';
+           closestChar.action = 'Being Robbed';
+        } else if (distToClosest < 8 && distToClosest > 2 && Math.random() > (10 - c.persona.sociability) / 10) {
           // Sociable characters more likely to approach
           c.targetX = Math.max(0, Math.min(39, c.x + (closestChar.x > c.x ? 1 : closestChar.x < c.x ? -1 : 0)));
           c.targetY = Math.max(0, Math.min(29, c.y + (closestChar.y > c.y ? 1 : closestChar.y < c.y ? -1 : 0)));
@@ -299,7 +344,7 @@ class Engine {
         if (c.y < c.targetY) c.y++;
         else if (c.y > c.targetY) c.y--;
         
-        c.energy -= 1; // Costs energy to move
+        c.energy -= this.state.weather === 'Acid Rain' ? 3 : 1; // Acid rain drains more energy
         c.action = 'Moving';
       }
     });
@@ -310,6 +355,35 @@ class Engine {
     this.state.turn = this.turnCounter;
     this.state.timeOfDay = (this.state.timeOfDay + 1) % 24; // Advance time by 1 hour per turn for mockup
     
+    // District Takeovers based on Tension
+    if (this.turnCounter % 8 === 0) {
+      Object.entries(this.state.districts).forEach(([districtName, data]) => {
+        if (data.tension > 80) {
+           // Find highest power faction
+           let highestFaction = data.control;
+           let maxPower = -1;
+           Object.entries(this.state.factions).forEach(([facName, facData]) => {
+             if (facData.power > maxPower) {
+               maxPower = facData.power;
+               highestFaction = facName;
+             }
+           });
+
+           if (highestFaction !== data.control && Math.random() > 0.5) {
+             this.emit({
+                id: `ev_${Date.now()}_${Math.random()}`,
+                type: 'TERRITORY_SHIFT',
+                description: `${highestFaction} seized control of ${districtName} amid high tension!`,
+                payload: { district: districtName, newControl: highestFaction },
+                timestamp: new Date().toLocaleTimeString()
+             });
+             // Reset tension after takeover
+             this.state.districts[districtName].tension = 20;
+           }
+        }
+      });
+    }
+
     // Process random faction power shifts
     if (this.turnCounter % 5 === 0) {
       const factionNames = Object.keys(this.state.factions);
@@ -371,32 +445,47 @@ class Engine {
     if (speakers.length > 0 && Math.random() > 0.3) {
       const speaker1 = speakers[0];
       const speaker2 = speakers[1];
-      const poolIndex = Math.floor(Math.random() * conversationPool.length);
-      const utterance1 = conversationPool[poolIndex];
-      const utterance2 = conversationPool[(poolIndex + 1) % conversationPool.length];
+      
+      let u1Text = "";
+      let u2Text = "";
+      let intents1: string[] = [];
+      let intents2: string[] = [];
+
+      // Check if speaker1 has a new item to brag about
+      if (speaker1.inventory.length > 0 && Math.random() > 0.5) {
+         const item = speaker1.inventory[speaker1.inventory.length - 1];
+         u1Text = `Check it out, just scored a ${item.name} for ${item.value} creds.`;
+         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Someone might take that." : "Not bad. Keep your head down.";
+      } else {
+         const poolIndex = Math.floor(Math.random() * conversationPool.length);
+         u1Text = conversationPool[poolIndex].text;
+         intents1 = conversationPool[poolIndex].intents;
+         u2Text = conversationPool[(poolIndex + 1) % conversationPool.length].text;
+         intents2 = conversationPool[(poolIndex + 1) % conversationPool.length].intents;
+      }
 
       const d1: Dialogue = {
         id: `d_${Date.now()}_1`,
         speakerId: speaker1.id,
-        text: utterance1.text,
+        text: u1Text,
         timestamp: new Date().toLocaleTimeString()
       };
       
       setTimeout(() => {
         this.dialogues.push(d1);
         this.notify();
-        this.extractEventsFromDialogue(d1, utterance1.intents);
+        this.extractEventsFromDialogue(d1, intents1);
         
         setTimeout(() => {
           const d2: Dialogue = {
             id: `d_${Date.now()}_2`,
             speakerId: speaker2.id,
-            text: utterance2.text,
+            text: u2Text,
             timestamp: new Date().toLocaleTimeString()
           };
           this.dialogues.push(d2);
           this.notify();
-          this.extractEventsFromDialogue(d2, utterance2.intents);
+          this.extractEventsFromDialogue(d2, intents2);
         }, 2500); 
         
       }, 500);

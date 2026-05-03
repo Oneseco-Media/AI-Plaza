@@ -50,6 +50,7 @@ export default function PhaserGame() {
     let names: Record<string, Phaser.GameObjects.Text> = {};
     let bubbles: Record<string, Phaser.GameObjects.Container> = {};
     let poiMarkers: Record<string, Phaser.GameObjects.Container> = {};
+    let floatingTexts: Record<string, Phaser.GameObjects.Text[]> = {};
     let currentDialogues: Set<string> = new Set();
     
     let currentScene: Phaser.Scene;
@@ -220,6 +221,36 @@ export default function PhaserGame() {
       });
     }
 
+    function showFloatingText(scene: Phaser.Scene, charId: string, text: string, color: string) {
+      const sprite = sprites[charId];
+      if (!sprite) return;
+
+      if (!floatingTexts[charId]) {
+         floatingTexts[charId] = [];
+      }
+
+      const floatText = scene.add.text(sprite.x, sprite.y - 20, text, {
+        fontFamily: 'monospace', fontSize: '10px', color: color,
+        stroke: '#000', strokeThickness: 2, fontStyle: 'bold'
+      }).setOrigin(0.5);
+
+      floatText.setDepth(110);
+      floatingTexts[charId].push(floatText);
+
+      // Simple physics/tween to make it float up and fade
+      scene.tweens.add({
+        targets: floatText,
+        y: floatText.y - 30,
+        alpha: 0,
+        duration: 1500,
+        ease: 'Cubic.easeOut',
+        onComplete: () => {
+           floatText.destroy();
+           floatingTexts[charId] = floatingTexts[charId].filter(t => t !== floatText);
+        }
+      });
+    }
+
     function updateScene(this: Phaser.Scene) {
       // Sync engine characters to sprites
       let midX = 0;
@@ -285,6 +316,13 @@ export default function PhaserGame() {
             bubbles[c.id].y = sprites[c.id].y - TILE_SIZE - 10;
           }
 
+          if (floatingTexts[c.id]) {
+             // Keep floating text tracking X but let Y animation run
+             floatingTexts[c.id].forEach(ft => {
+                ft.x = sprites[c.id].x;
+             });
+          }
+
           midX += sprites[c.id].x;
           midY += sprites[c.id].y;
           charCount++;
@@ -315,6 +353,18 @@ export default function PhaserGame() {
           }
         }
       });
+
+      // Look for fresh floating text events that we haven't rendered
+      // Normally we'd use a better ID tracking system, but for mockup we just take the first un-processed ones
+      // Since events are unshifted, we just check the most recent events
+      const recentFloatEvents = events.filter(e => e.type === 'FLOATING_TEXT' && e.timestamp === '');
+      recentFloatEvents.forEach(e => {
+         if (currentScene) {
+            showFloatingText(currentScene, e.payload.charId, e.payload.text, e.payload.color);
+            e.timestamp = Date.now().toString(); // Hack to mark it as read without mutating state poorly
+         }
+      });
+
     });
 
     const handleResize = () => {
@@ -443,12 +493,18 @@ export default function PhaserGame() {
                    <div key={c.id} className="flex flex-col border-b border-green-900/20 pb-2 last:border-0">
                      <div className="flex justify-between text-white">
                        <span className="font-bold" style={{color: `#${c.color.toString(16)}`}}>{c.name}</span>
-                       <span>Energy: {c.energy}%</span>
+                       <span className="text-[10px] text-muted-foreground">{c.persona.trait}</span>
                      </div>
                      <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
                        <span>Status: {c.action}</span>
                        <span className="text-yellow-400/80">${c.credits}</span>
                        <span>Loc: [{c.x}, {c.y}]</span>
+                     </div>
+                     <div className="w-full bg-black/40 h-1 mt-1 flex rounded overflow-hidden">
+                        <div className="bg-blue-500 h-full" style={{width: `${c.energy}%`}} />
+                     </div>
+                     <div className="w-full bg-black/40 h-1 mt-0.5 flex rounded overflow-hidden">
+                        <div className="bg-red-500 h-full" style={{width: `${c.health}%`}} />
                      </div>
                      {c.inventory.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
