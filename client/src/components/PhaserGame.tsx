@@ -86,12 +86,43 @@ export default function PhaserGame() {
       graphics.lineStyle(4, 0x06b6d4, 0.5);
       graphics.strokeRect(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
 
-      // Add some random trees for scenery
-      for (let i = 0; i < 40; i++) {
+      // Add some random trees and neon poles for scenery
+      for (let i = 0; i < 60; i++) {
         const tx = Phaser.Math.Between(1, MAP_WIDTH - 2) * TILE_SIZE;
         const ty = Phaser.Math.Between(1, MAP_HEIGHT - 2) * TILE_SIZE;
-        const tree = this.add.image(tx, ty, 'tree').setOrigin(0.5, 1);
-        tree.tint = 0x66ccff; // neon tint
+        
+        // 50% chance of tree or random structural prop
+        if (Math.random() > 0.5) {
+           const tree = this.add.image(tx, ty, 'tree').setOrigin(0.5, 1);
+           tree.tint = Math.random() > 0.5 ? 0x66ccff : 0xff66cc; // neon tints
+           tree.setDepth(2);
+        } else {
+           // Draw a structural "neon pole" or "crates"
+           const prop = this.add.graphics();
+           const color = [0x00ffff, 0xff00ff, 0xffff00][Math.floor(Math.random()*3)];
+           prop.fillStyle(0x222222, 1);
+           prop.lineStyle(1, color, 0.8);
+           
+           if (Math.random() > 0.5) {
+              // Create crate stack
+              prop.fillRect(tx, ty - 16, 16, 16);
+              prop.strokeRect(tx, ty - 16, 16, 16);
+              if (Math.random() > 0.5) {
+                prop.fillRect(tx - 8, ty, 16, 16);
+                prop.strokeRect(tx - 8, ty, 16, 16);
+                prop.fillRect(tx + 8, ty, 16, 16);
+                prop.strokeRect(tx + 8, ty, 16, 16);
+              }
+           } else {
+              // Create neon pole/antenna
+              prop.fillStyle(color, 1);
+              prop.fillRect(tx, ty - 32, 4, 32);
+              // glow effect
+              prop.lineStyle(4, color, 0.3);
+              prop.strokeRect(tx, ty - 32, 4, 32);
+           }
+           prop.setDepth(1);
+        }
       }
 
       // Create animations
