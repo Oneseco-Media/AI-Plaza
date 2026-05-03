@@ -46,6 +46,7 @@ export type Event = {
 export type Character = {
   id: string;
   name: string;
+  role: 'Hacker' | 'Medic' | 'Enforcer' | 'Scavenger' | 'Fixer' | 'CorpSec';
   persona: Persona;
   faction: string | null;
   color: number; // Hex color for Phaser
@@ -58,7 +59,12 @@ export type Character = {
   action: string;
   task: string | null;
   credits: number;
+  bounty: number;
   inventory: InventoryItem[];
+  equipped: string | null;
+  level: number;
+  xp: number;
+  squadId: string | null;
 };
 
 export type Dialogue = {
@@ -79,7 +85,8 @@ export const initialWorldState: WorldState = {
   factions: {
     'Synapse Cartel': { power: 60, leader: 'Cipher' },
     'Scrap Barons': { power: 30, leader: 'Krieg' },
-    'CorpSec': { power: 90, leader: 'Director Vance' }
+    'CorpSec': { power: 90, leader: 'Director Vance' },
+    'Neon Syndicate': { power: 45, leader: 'Echo' }
   },
   relationships: {
     'Neon:Cipher': 45,
@@ -91,17 +98,31 @@ export const initialWorldState: WorldState = {
   pois: [
     { id: 'poi1', name: 'The Neon Lotus', x: 20, y: 15, type: 'Bar', district: 'Neon Grid' },
     { id: 'poi2', name: 'Scrap Exchange', x: 8, y: 8, type: 'Shop', district: 'The Rust Wastes' },
-    { id: 'poi3', name: 'Corp Tower', x: 35, y: 25, type: 'Corp', district: 'Aero Heights' },
-    { id: 'poi4', name: 'Cartel Hideout', x: 15, y: 20, type: 'Hideout', district: 'Neon Grid' }
+    { id: 'poi3', name: 'Corp Tower', x: 45, y: 35, type: 'Corp', district: 'Aero Heights' },
+    { id: 'poi4', name: 'Cartel Hideout', x: 15, y: 20, type: 'Hideout', district: 'Neon Grid' },
+    { id: 'poi5', name: 'Underground Clinic', x: 22, y: 28, type: 'Shop', district: 'The Rust Wastes' },
+    { id: 'poi6', name: 'Data Hub', x: 38, y: 12, type: 'Corp', district: 'Neon Grid' },
+    { id: 'poi7', name: 'Alley Bar', x: 5, y: 20, type: 'Bar', district: 'The Rust Wastes' },
+    { id: 'poi8', name: 'Smuggler Den', x: 40, y: 25, type: 'Hideout', district: 'Aero Heights' },
+    { id: 'poi9', name: 'Gun Runner', x: 28, y: 5, type: 'Shop', district: 'Neon Grid' },
+    { id: 'poi10', name: 'Cyber Clinic', x: 35, y: 8, type: 'Shop', district: 'Neon Grid' }
   ]
 };
 
-// Map size 40x30, Tile 32
+// Map size 50x40, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, faction: null, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 1500, inventory: [] },
-  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, faction: 'Synapse Cartel', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 8000, inventory: [] },
-  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, faction: 'Scrap Barons', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 450, inventory: [] },
-  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, faction: 'CorpSec', color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, health: 100, action: 'Idle', task: null, credits: 50000, inventory: [] }
+  { id: 'c1', name: 'Neon', role: 'Hacker', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, faction: null, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 1500, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c2', name: 'Cipher', role: 'Fixer', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, faction: 'Synapse Cartel', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 8000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c3', name: 'Krieg', role: 'Enforcer', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, faction: 'Scrap Barons', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 450, bounty: 5000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c4', name: 'Vance', role: 'CorpSec', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, faction: 'CorpSec', color: 0x44ff44, x: 45, y: 35, targetX: 45, targetY: 35, energy: 100, health: 100, action: 'Idle', task: null, credits: 50000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c5', name: 'Jax', role: 'Scavenger', persona: { trait: 'Resourceful survivor', aggressiveness: 3, sociability: 6, greed: 5, curiosity: 10 }, faction: 'Scrap Barons', color: 0xaaaa00, x: 8, y: 30, targetX: 8, targetY: 30, energy: 100, health: 100, action: 'Idle', task: null, credits: 200, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c6', name: 'Doc', role: 'Medic', persona: { trait: 'Underground surgeon', aggressiveness: 1, sociability: 9, greed: 4, curiosity: 8 }, faction: null, color: 0xffffff, x: 20, y: 25, targetX: 20, targetY: 25, energy: 100, health: 100, action: 'Idle', task: null, credits: 3000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c7', name: 'Rogue', role: 'Enforcer', persona: { trait: 'Trigger-happy merc', aggressiveness: 9, sociability: 3, greed: 8, curiosity: 2 }, faction: 'Synapse Cartel', color: 0xff0044, x: 25, y: 10, targetX: 25, targetY: 10, energy: 100, health: 100, action: 'Idle', task: null, credits: 1200, bounty: 2000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c8', name: 'Echo', role: 'Hacker', persona: { trait: 'Silent phantom', aggressiveness: 2, sociability: 1, greed: 6, curiosity: 9 }, faction: 'Neon Syndicate', color: 0x4400ff, x: 40, y: 5, targetX: 40, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 5000, bounty: 1000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c9', name: 'Junker', role: 'Scavenger', persona: { trait: 'Waste dweller', aggressiveness: 4, sociability: 4, greed: 7, curiosity: 8 }, faction: 'Scrap Barons', color: 0xaa5500, x: 2, y: 2, targetX: 2, targetY: 2, energy: 100, health: 100, action: 'Idle', task: null, credits: 50, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c10', name: 'Splicer', role: 'Medic', persona: { trait: 'Cyber-doc', aggressiveness: 3, sociability: 5, greed: 6, curiosity: 7 }, faction: 'Synapse Cartel', color: 0x00ffaa, x: 35, y: 8, targetX: 35, targetY: 8, energy: 100, health: 100, action: 'Idle', task: null, credits: 2000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c11', name: 'Ghost', role: 'Hacker', persona: { trait: 'Rogue AI', aggressiveness: 1, sociability: 1, greed: 2, curiosity: 10 }, faction: 'Neon Syndicate', color: 0xffffff, x: 42, y: 38, targetX: 42, targetY: 38, energy: 100, health: 100, action: 'Idle', task: null, credits: 10000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c12', name: 'Tank', role: 'CorpSec', persona: { trait: 'Heavy assault', aggressiveness: 8, sociability: 2, greed: 4, curiosity: 2 }, faction: 'CorpSec', color: 0x00ff00, x: 45, y: 36, targetX: 45, targetY: 36, energy: 100, health: 100, action: 'Idle', task: null, credits: 1000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null }
 ];
 
 // Mock Conversational Data
@@ -115,7 +136,11 @@ const conversationPool = [
   { text: "Rumor has it Krieg lost a skirmish. Scrap Barons are weak.", intents: ['SCRAP_BARONS_POWER_DOWN'] },
   { text: "Good. More territory for us to claim in the Wastes.", intents: ['TERRITORY_SHIFT_WASTES'] },
   { text: "Director Vance wants order. You bring chaos.", intents: ['MOOD_TENSE'] },
-  { text: "Order is just another word for control.", intents: ['REBELLION'] }
+  { text: "Order is just another word for control.", intents: ['REBELLION'] },
+  { text: "The acid rain is getting worse. Check your seals.", intents: ['MOOD_TENSE'] },
+  { text: "I heard someone got mugged by the clinic today.", intents: ['TENSION_UP'] },
+  { text: "Syndicate is making moves. Echo is planning something big.", intents: ['SYNDICATE_ACTIVITY'] },
+  { text: "Stay low, keep your creds hidden.", intents: [] }
 ];
 
 class Engine {
@@ -183,6 +208,11 @@ class Engine {
         return; // Skip movement if resting
       }
 
+      // Weather effects
+      if (this.state.weather === 'Smog' && Math.random() > 0.8) {
+         c.health = Math.max(0, c.health - 2);
+      }
+
       if ((c.action === 'Resting' || c.action === 'Incapsulated / Healing') && (c.energy < 100 || c.health < 100)) {
         c.energy = Math.min(100, c.energy + 10);
         c.health = Math.min(100, c.health + 10);
@@ -191,6 +221,49 @@ class Engine {
            this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Recovered`, color: '#00ff00' }, timestamp: '' });
         }
         return;
+      }
+
+      // Needs-based targeting
+      if (c.energy < 40 && c.health > 0) {
+         // Need energy, find a Bar or Hideout
+         const restPoi = this.state.pois.find(p => p.type === 'Bar' || p.type === 'Hideout');
+         if (restPoi && c.targetX !== restPoi.x && c.targetY !== restPoi.y) {
+            c.targetX = restPoi.x;
+            c.targetY = restPoi.y;
+            c.task = 'Resting';
+            c.action = `Heading to ${restPoi.name} to Rest`;
+         }
+      } else if (c.health < 40 && c.health > 0 && c.credits > 100) {
+         // Need healing, find Clinic
+         const clinicPoi = this.state.pois.find(p => p.type === 'Shop' && p.name.includes('Clinic'));
+         if (clinicPoi && c.targetX !== clinicPoi.x && c.targetY !== clinicPoi.y) {
+            c.targetX = clinicPoi.x;
+            c.targetY = clinicPoi.y;
+            c.task = 'Seeking Meds';
+            c.action = `Heading to ${clinicPoi.name} for Healing`;
+         }
+      }
+
+      // Check for XP Level Up
+      if (c.xp >= c.level * 100) {
+         c.xp -= c.level * 100;
+         c.level += 1;
+         c.health = 100;
+         c.energy = 100;
+         // Random stat increase
+         const stats: (keyof Persona)[] = ['aggressiveness', 'sociability', 'greed', 'curiosity'];
+         const statToIncrease = stats[Math.floor(Math.random() * stats.length)];
+         if (typeof c.persona[statToIncrease] === 'number') {
+            (c.persona[statToIncrease] as number) = Math.min(10, (c.persona[statToIncrease] as number) + 1);
+         }
+         this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `LEVEL UP!`, color: '#ffff00' }, timestamp: '' });
+         this.emit({
+            id: `ev_${Date.now()}_${Math.random()}`,
+            type: 'SYSTEM_ALERT',
+            description: `${c.name} leveled up to Level ${c.level}!`,
+            payload: { char: c.name, level: c.level },
+            timestamp: new Date().toLocaleTimeString()
+         });
       }
 
       // If reached target, pick new target or execute task
@@ -213,6 +286,7 @@ class Engine {
               if (success) {
                  const found = Math.floor(Math.random() * 500) + 100;
                  c.credits += found;
+                 c.xp += 20;
                  
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${found} Cr`, color: '#00ff00' }, timestamp: '' });
 
@@ -226,6 +300,14 @@ class Engine {
                        type: itemTypes[Math.floor(Math.random() * itemTypes.length)]
                     };
                     c.inventory.push(newItem);
+                    
+                    // Auto-equip logic
+                    if (newItem.type === 'Weapon' || newItem.type === 'Tech') {
+                       if (!c.equipped || Math.random() > 0.5) {
+                          c.equipped = newItem.name;
+                       }
+                    }
+
                     outcomeMsg = `Found ${found} creds and a ${newItem.name}.`;
                     
                     setTimeout(() => {
@@ -244,7 +326,9 @@ class Engine {
               success = (roll + c.persona.aggressiveness + bonus) > 10;
               if (success) {
                  c.credits += 1000;
-                 outcomeMsg = `Intimidated locals for 1000 creds${bonus ? ' (weapon bonus)' : ''}.`;
+                 c.bounty += 500; // Extortion raises bounty
+                 c.xp += 30;
+                 outcomeMsg = `Intimidated locals for 1000 creds${bonus ? ' (weapon bonus)' : ''}. Bounty increased.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 Cr`, color: '#00ff00' }, timestamp: '' });
               } else {
                  outcomeMsg = `Locals resisted.`;
@@ -255,6 +339,7 @@ class Engine {
               success = (roll + c.persona.sociability) > 11;
               if (success) {
                  c.credits += 800;
+                 c.xp += 25;
                  outcomeMsg = `Good deal made.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 Cr`, color: '#00ff00' }, timestamp: '' });
               } else {
@@ -266,6 +351,8 @@ class Engine {
               success = (roll + c.persona.aggressiveness + bonus) > 12;
               if (success) {
                  c.credits += 500;
+                 c.bounty += 1000; // Robbing raises bounty a lot
+                 c.xp += 40;
                  outcomeMsg = `Successfully mugged a target for 500 creds${bonus ? ' (weapon bonus)' : ''}.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 Cr`, color: '#00ff00' }, timestamp: '' });
               } else {
@@ -273,6 +360,37 @@ class Engine {
                  outcomeMsg = `Target fought back. Lost health.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-25 HP`, color: '#ff0000' }, timestamp: '' });
               }
+           } else if (c.task === 'Hacking') {
+              let bonus = hasTech ? 4 : 0;
+              success = (roll + c.persona.curiosity + bonus) > 13;
+              if (success) {
+                 c.credits += 1500;
+                 c.bounty += 200;
+                 c.xp += 50;
+                 const newItem: InventoryItem = { id: `itm_${Date.now()}_${Math.random()}`, name: `Encrypted Data`, value: 1000, type: 'Data' };
+                 c.inventory.push(newItem);
+                 outcomeMsg = `Hacked terminal. Secured data and 1500 creds.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1500 Cr (Hacked)`, color: '#00ffff' }, timestamp: '' });
+              } else {
+                 c.energy -= 40; // mental fatigue
+                 outcomeMsg = `Firewall locked out. System shock.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Hack Failed`, color: '#ff0000' }, timestamp: '' });
+              }
+           } else if (c.task === 'Patrolling') {
+              c.credits += 200; // salary
+              c.xp += 10;
+              outcomeMsg = `Completed patrol sweep.`;
+              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+200 Cr (Salary)`, color: '#00ff00' }, timestamp: '' });
+           } else if (c.task === 'Resting' && (currentPoi?.type === 'Bar' || currentPoi?.type === 'Hideout')) {
+              c.energy = 100;
+              if (currentPoi.type === 'Bar') c.credits = Math.max(0, c.credits - 50);
+              outcomeMsg = `Rested at ${currentPoi.name}.`;
+              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+EN (Rested)`, color: '#00ff00' }, timestamp: '' });
+           } else if (c.task === 'Seeking Meds' && currentPoi?.type === 'Shop') {
+              c.health = 100;
+              c.credits -= 100;
+              outcomeMsg = `Healed at ${currentPoi.name}.`;
+              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+HP (Healed)`, color: '#00ff00' }, timestamp: '' });
            }
 
            const currentPoi = this.state.pois.find(p => p.x === c.x && p.y === c.y);
@@ -298,9 +416,29 @@ class Engine {
         );
 
         const distToClosest = Math.abs(closestChar.x - c.x) + Math.abs(closestChar.y - c.y);
+        const relWithClosest = this.state.relationships[`${c.name}:${closestChar.name}`] || this.state.relationships[`${closestChar.name}:${c.name}`] || 50;
 
-        // Check for robbery if close enough
-        if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8) {
+        // Medics heal the incapacitated
+        if (c.role === 'Medic' && closestChar.health <= 0 && distToClosest <= 2) {
+           c.action = `Healing ${closestChar.name}`;
+           closestChar.health = 50;
+           c.energy -= 20;
+           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `+50 HP (Healed)`, color: '#00ff00' }, timestamp: '' });
+           this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-20 EN`, color: '#aaaaaa' }, timestamp: '' });
+        }
+        // CorpSec arrests those with bounties
+        else if (c.role === 'CorpSec' && closestChar.bounty > 0 && distToClosest <= 2 && Math.random() > 0.3) {
+           c.action = `Arresting ${closestChar.name}`;
+           const reward = closestChar.bounty;
+           c.credits += reward;
+           closestChar.bounty = 0;
+           closestChar.credits = Math.max(0, closestChar.credits - reward); // Fines
+           closestChar.health -= 50; // Beat them up
+           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${reward} Cr (Bounty)`, color: '#00ff00' }, timestamp: '' });
+           this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `ARRESTED`, color: '#ff0000' }, timestamp: '' });
+        }
+        // Check for robbery if close enough, not friends, and has greed
+        else if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8 && relWithClosest < 60 && c.role !== 'CorpSec') {
            c.action = `Robbing ${closestChar.name}`;
            c.task = 'Robbing';
            closestChar.action = 'Being Robbed';
@@ -310,13 +448,27 @@ class Engine {
           c.targetY = Math.max(0, Math.min(29, c.y + (closestChar.y > c.y ? 1 : closestChar.y < c.y ? -1 : 0)));
           c.action = 'Approaching';
         } else if (Math.random() > 0.6) {
-          // Pick a random task based on persona
+          // Pick a random task based on persona and role
           const randomPoi = this.state.pois[Math.floor(Math.random() * this.state.pois.length)];
           c.targetX = randomPoi.x;
           c.targetY = randomPoi.y;
           
-          // Assign task based on highest trait or randomness
-          if (c.persona.aggressiveness > 7 && Math.random() > 0.5) {
+          if (c.role === 'Hacker' && Math.random() > 0.4) {
+             c.task = 'Hacking';
+             c.action = `Heading to ${randomPoi.name} to Hack`;
+          } else if (c.role === 'CorpSec') {
+             // CorpSec patrols random POIs, but prefers high tension areas
+             const tenseDistricts = Object.entries(this.state.districts).filter(([_, d]) => d.tension > 60).map(([n, _]) => n);
+             let targetPoi = randomPoi;
+             if (tenseDistricts.length > 0 && Math.random() > 0.3) {
+                 const tensePois = this.state.pois.filter(p => tenseDistricts.includes(p.district));
+                 if (tensePois.length > 0) targetPoi = tensePois[Math.floor(Math.random() * tensePois.length)];
+             }
+             c.targetX = targetPoi.x;
+             c.targetY = targetPoi.y;
+             c.task = 'Patrolling';
+             c.action = `Patrolling ${targetPoi.name}`;
+          } else if (c.persona.aggressiveness > 7 && Math.random() > 0.5) {
             c.task = 'Extorting';
             c.action = `Heading to ${randomPoi.name} to Extort`;
           } else if (c.persona.curiosity > 7 && Math.random() > 0.5) {
@@ -331,9 +483,9 @@ class Engine {
           const dir = Math.floor(Math.random() * 4);
           const dist = Math.floor(Math.random() * 3) + 1;
           if (dir === 0) c.targetY = Math.max(0, c.y - dist);
-          if (dir === 1) c.targetY = Math.min(29, c.y + dist); // MAP_HEIGHT 30
+          if (dir === 1) c.targetY = Math.min(39, c.y + dist); // MAP_HEIGHT 40
           if (dir === 2) c.targetX = Math.max(0, c.x - dist);
-          if (dir === 3) c.targetX = Math.min(39, c.x + dist); // MAP_WIDTH 40
+          if (dir === 3) c.targetX = Math.min(49, c.x + dist); // MAP_WIDTH 50
           c.action = 'Wandering';
         }
       } else {
@@ -369,7 +521,7 @@ class Engine {
              }
            });
 
-           if (highestFaction !== data.control && Math.random() > 0.5) {
+           if (highestFaction !== data.control && Math.random() > 0.4) { // Increased takeover chance
              this.emit({
                 id: `ev_${Date.now()}_${Math.random()}`,
                 type: 'TERRITORY_SHIFT',
@@ -379,7 +531,11 @@ class Engine {
              });
              // Reset tension after takeover
              this.state.districts[districtName].tension = 20;
+             this.state.factions[highestFaction].power += 10;
            }
+        } else if (Math.random() > 0.8) {
+           // Randomly fluctuate tension
+           this.state.districts[districtName].tension = Math.max(0, Math.min(100, this.state.districts[districtName].tension + (Math.floor(Math.random() * 21) - 10)));
         }
       });
     }
@@ -418,6 +574,25 @@ class Engine {
         });
       }
     }
+
+      // Global Events
+      if (this.turnCounter > 0 && this.turnCounter % 30 === 0 && Math.random() > 0.5) {
+         const events = [
+            { name: "Market Crash", desc: "All characters lost 20% of their credits.", action: () => this.chars.forEach(c => c.credits = Math.floor(c.credits * 0.8)) },
+            { name: "Tech Boom", desc: "Scavengers and Hackers received bonus XP.", action: () => this.chars.forEach(c => { if (c.role === 'Hacker' || c.role === 'Scavenger') c.xp += 50; }) },
+            { name: "CorpSec Crackdown", desc: "Tension reduced in all districts.", action: () => Object.entries(this.state.districts).forEach(([_, d]) => d.tension = Math.max(0, d.tension - 30)) },
+            { name: "Syndicate Raid", desc: "Neon Syndicate gained power, tension spiked in Neon Grid.", action: () => { if (this.state.factions['Neon Syndicate']) { this.state.factions['Neon Syndicate'].power = Math.min(100, this.state.factions['Neon Syndicate'].power + 20); this.state.districts['Neon Grid'].tension = Math.min(100, this.state.districts['Neon Grid'].tension + 40); } } }
+         ];
+         const event = events[Math.floor(Math.random() * events.length)];
+         event.action();
+         this.emit({
+            id: `ev_${Date.now()}_global`,
+            type: 'SYSTEM_ALERT',
+            description: `GLOBAL EVENT: ${event.name}. ${event.desc}`,
+            payload: { event: event.name },
+            timestamp: new Date().toLocaleTimeString()
+         });
+      }
 
     // 1. Move characters
     this.updateCharacterPositions();

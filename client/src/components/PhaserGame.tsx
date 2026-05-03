@@ -56,6 +56,7 @@ export default function PhaserGame() {
     let currentScene: Phaser.Scene;
     let rainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
     let acidRainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+    let dayNightOverlay: Phaser.GameObjects.Rectangle | null = null;
 
     function preloadScene(this: Phaser.Scene) {
       this.load.spritesheet('dude', '/dude.png', { frameWidth: 32, frameHeight: 48 });
@@ -124,16 +125,29 @@ export default function PhaserGame() {
         }).setOrigin(0.5);
       });
 
-      // Setup POIs
+      // Setup POIs and Buildings
       engineState.world.pois.forEach(poi => {
-        const poiBg = this.add.graphics();
-        poiBg.fillStyle(0x000000, 0.6);
-        poiBg.lineStyle(1, 0xffaa00, 0.8);
-        poiBg.strokeRect(-20, -10, 40, 20);
-        poiBg.fillRect(-20, -10, 40, 20);
+        // Draw actual building
+        const bWidth = poi.type === 'Corp' ? 4 : poi.type === 'Hideout' ? 2 : poi.type === 'Shop' ? 2 : 3;
+        const bHeight = poi.type === 'Corp' ? 4 : poi.type === 'Hideout' ? 2 : poi.type === 'Shop' ? 2 : 2;
         
-        const poiText = this.add.text(0, 0, poi.name.substring(0, 3), {
-          fontFamily: 'monospace', fontSize: '10px', color: '#ffaa00'
+        const building = this.add.graphics();
+        building.fillStyle(poi.type === 'Corp' ? 0x112233 : poi.type === 'Bar' ? 0x331122 : poi.type === 'Shop' ? 0x113311 : 0x222222, 1);
+        building.lineStyle(2, poi.type === 'Corp' ? 0x00ffff : poi.type === 'Bar' ? 0xff00ff : poi.type === 'Shop' ? 0x00ffaa : 0xaaaaaa, 1);
+        
+        // Draw building centered on POI but occupying multiple tiles
+        building.fillRect(poi.x * TILE_SIZE - (bWidth * TILE_SIZE)/2 + TILE_SIZE/2, poi.y * TILE_SIZE - (bHeight * TILE_SIZE)/2 + TILE_SIZE/2, bWidth * TILE_SIZE, bHeight * TILE_SIZE);
+        building.strokeRect(poi.x * TILE_SIZE - (bWidth * TILE_SIZE)/2 + TILE_SIZE/2, poi.y * TILE_SIZE - (bHeight * TILE_SIZE)/2 + TILE_SIZE/2, bWidth * TILE_SIZE, bHeight * TILE_SIZE);
+        building.setDepth(1);
+
+        const poiBg = this.add.graphics();
+        poiBg.fillStyle(0x000000, 0.8);
+        poiBg.lineStyle(1, 0xffaa00, 0.8);
+        poiBg.strokeRect(-25, -12, 50, 24);
+        poiBg.fillRect(-25, -12, 50, 24);
+        
+        const poiText = this.add.text(0, 0, poi.name.substring(0, 6), {
+          fontFamily: 'monospace', fontSize: '10px', color: '#ffaa00', fontStyle: 'bold'
         }).setOrigin(0.5);
 
         const container = this.add.container(poi.x * TILE_SIZE + TILE_SIZE/2, poi.y * TILE_SIZE + TILE_SIZE/2, [poiBg, poiText]);
@@ -169,6 +183,30 @@ export default function PhaserGame() {
       acidRainParticles.setDepth(50);
       acidRainParticles.stop();
       acidRainEmitter = acidRainParticles;
+      
+      // Setup day/night overlay
+      dayNightOverlay = this.add.rectangle(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, 0x000033);
+      dayNightOverlay.setOrigin(0);
+      dayNightOverlay.setDepth(40);
+      dayNightOverlay.setAlpha(0); // Day time default
+      dayNightOverlay.setBlendMode(Phaser.BlendModes.MULTIPLY);
+
+      // Add a smog emitter
+      const smogParticles = this.add.particles(0, 0, 'rain', {
+        x: { min: 0, max: MAP_WIDTH * TILE_SIZE },
+        y: { min: 0, max: MAP_HEIGHT * TILE_SIZE },
+        lifespan: 5000,
+        speedY: { min: -10, max: 10 },
+        speedX: { min: 20, max: 50 },
+        scale: { start: 2, end: 4 },
+        quantity: 1,
+        alpha: { start: 0.1, end: 0 },
+        tint: 0x555555,
+        blendMode: 'SCREEN'
+      });
+      smogParticles.setDepth(45);
+      smogParticles.stop();
+      (this as any).smogEmitter = smogParticles;
     }
 
     function showSpeechBubble(scene: Phaser.Scene, charId: string, text: string) {
@@ -259,24 +297,33 @@ export default function PhaserGame() {
 
       // Update ambient light based on time of day (0-23)
       const hour = engineState.world.timeOfDay;
-      let brightness = 1;
-      if (hour >= 20 || hour <= 5) brightness = 0.3; // Night
-      else if (hour === 6 || hour === 19) brightness = 0.6; // Dusk/Dawn
-      else brightness = 1.0; // Day
+      let darkness = 0;
+      if (hour >= 20 || hour <= 5) darkness = 0.6; // Night
+      else if (hour === 6 || hour === 19) darkness = 0.3; // Dusk/Dawn
+      else darkness = 0.0; // Day
       
-      this.cameras.main.setAlpha(brightness);
+      if (dayNightOverlay) {
+         dayNightOverlay.setAlpha(dayNightOverlay.alpha + (darkness - dayNightOverlay.alpha) * 0.05);
+      }
 
       // Handle weather effects
       if (rainEmitter && acidRainEmitter) {
         if (engineState.world.weather === 'Rain') {
           if (!rainEmitter.active) rainEmitter.start();
           acidRainEmitter.stop();
+          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
         } else if (engineState.world.weather === 'Acid Rain') {
           if (!acidRainEmitter.active) acidRainEmitter.start();
           rainEmitter.stop();
+          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
+        } else if (engineState.world.weather === 'Smog') {
+          rainEmitter.stop();
+          acidRainEmitter.stop();
+          if ((this as any).smogEmitter && !(this as any).smogEmitter.active) (this as any).smogEmitter.start();
         } else {
           rainEmitter.stop();
           acidRainEmitter.stop();
+          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
         }
       }
 
@@ -491,15 +538,25 @@ export default function PhaserGame() {
                <div className="space-y-3 font-mono text-xs">
                  {engineState.chars.map(c => (
                    <div key={c.id} className="flex flex-col border-b border-green-900/20 pb-2 last:border-0">
-                     <div className="flex justify-between text-white">
-                       <span className="font-bold" style={{color: `#${c.color.toString(16)}`}}>{c.name}</span>
+                     <div className="flex justify-between text-white items-center">
+                       <span className="font-bold flex items-center gap-1" style={{color: `#${c.color.toString(16)}`}}>
+                         {c.name}
+                         <span className="text-[8px] bg-black/50 px-1 rounded uppercase tracking-wider">{c.role}</span>
+                       </span>
                        <span className="text-[10px] text-muted-foreground">{c.persona.trait}</span>
                      </div>
                      <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
                        <span>Status: {c.action}</span>
-                       <span className="text-yellow-400/80">${c.credits}</span>
-                       <span>Loc: [{c.x}, {c.y}]</span>
+                       <div className="flex gap-2 text-right">
+                         <span className="text-yellow-400/80">${c.credits}</span>
+                         {c.bounty > 0 && <span className="text-red-500 font-bold">Bounty: ${c.bounty}</span>}
+                       </div>
                      </div>
+                     {c.equipped && (
+                       <div className="text-[9px] text-cyan-400 mt-1">
+                         Equipped: {c.equipped}
+                       </div>
+                     )}
                      <div className="w-full bg-black/40 h-1 mt-1 flex rounded overflow-hidden">
                         <div className="bg-blue-500 h-full" style={{width: `${c.energy}%`}} />
                      </div>
