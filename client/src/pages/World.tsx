@@ -24,11 +24,11 @@ export default function World() {
       <PhaserGame />
       
       {/* Controls HUD */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-2 p-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-full shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-4 p-3 bg-black/60 backdrop-blur-md border border-primary/30 rounded-full shadow-[0_0_15px_rgba(0,255,255,0.2)]">
          <Button 
             size="sm"
             variant="outline"
-            className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary font-mono text-xs"
+            className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary font-mono text-xs px-4"
             onClick={() => {
               for (let i = 0; i < 20; i++) worldEngine.advanceTurn();
             }}
@@ -39,7 +39,7 @@ export default function World() {
          <Button 
             size="icon"
             variant="outline"
-            className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
+            className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary h-9 w-9"
             onClick={() => worldEngine.advanceTurn()}
             disabled={autoRun}
          >
@@ -48,7 +48,7 @@ export default function World() {
          
          <Button 
             size="icon"
-            className={`rounded-full border ${autoRun ? 'bg-destructive/20 border-destructive text-destructive hover:bg-destructive/40' : 'bg-primary/20 border-primary text-primary hover:bg-primary/40'}`}
+            className={`rounded-full border h-9 w-9 ${autoRun ? 'bg-destructive/20 border-destructive text-destructive hover:bg-destructive/40' : 'bg-primary/20 border-primary text-primary hover:bg-primary/40'}`}
             onClick={() => setAutoRun(!autoRun)}
          >
            {autoRun ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}

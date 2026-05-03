@@ -489,15 +489,36 @@ class Engine {
           c.action = 'Wandering';
         }
       } else {
+        let newX = c.x;
+        let newY = c.y;
+
         // move 1 step towards target
-        if (c.x < c.targetX) c.x++;
-        else if (c.x > c.targetX) c.x--;
+        if (c.x < c.targetX) newX++;
+        else if (c.x > c.targetX) newX--;
         
-        if (c.y < c.targetY) c.y++;
-        else if (c.y > c.targetY) c.y--;
+        if (c.y < c.targetY) newY++;
+        else if (c.y > c.targetY) newY--;
         
+        // Check collision
+        const collision = this.chars.some(other => other.id !== c.id && other.x === newX && other.y === newY);
+        
+        if (!collision) {
+           c.x = newX;
+           c.y = newY;
+           c.action = 'Moving';
+        } else {
+           c.action = 'Blocked';
+           // Basic pathfinding around obstacle
+           if (c.x !== c.targetX && !this.chars.some(other => other.id !== c.id && other.x === newX && other.y === c.y)) {
+              c.x = newX;
+              c.action = 'Moving (Alt)';
+           } else if (c.y !== c.targetY && !this.chars.some(other => other.id !== c.id && other.x === c.x && other.y === newY)) {
+              c.y = newY;
+              c.action = 'Moving (Alt)';
+           }
+        }
+
         c.energy -= this.state.weather === 'Acid Rain' ? 3 : 1; // Acid rain drains more energy
-        c.action = 'Moving';
       }
     });
   }
