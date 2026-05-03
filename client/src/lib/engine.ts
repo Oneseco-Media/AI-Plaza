@@ -46,7 +46,7 @@ export type Event = {
 export type Character = {
   id: string;
   name: string;
-  role: 'Hacker' | 'Medic' | 'Enforcer' | 'Scavenger' | 'Fixer' | 'CorpSec';
+  role: 'Trainer' | 'Medic' | 'Gym Leader' | 'Researcher' | 'Thief' | 'Rival';
   persona: Persona;
   faction: string | null;
   color: number; // Hex color for Phaser
@@ -130,20 +130,20 @@ export const characters: Character[] = [
 
 // Mock Conversational Data
 const conversationPool = [
-  { text: "Did you see CorpSec moving through the Grid last night?", intents: ['TENSION_UP', 'CORPSEC_ACTIVITY'] },
-  { text: "Yeah, Vance is tightening the leash. We need to push back.", intents: ['REBELLION', 'RELATIONSHIP_UP'] },
-  { text: "I've secured some new hardware from the Wastes. Interested?", intents: ['TRADE', 'SCRAP_BARONS_POWER_UP'] },
-  { text: "Keep it quiet. The Cartel has eyes everywhere right now.", intents: ['CARTEL_ACTIVITY', 'TENSION_UP'] },
-  { text: "I don't trust Vance. He's planning a sweep of the lower levels.", intents: ['TENSION_MAX', 'MOOD_CHAOTIC'] },
-  { text: "Let him try. We have the perimeter rigged.", intents: ['REBELLION', 'RELATIONSHIP_UP'] },
-  { text: "Rumor has it Krieg lost a skirmish. Scrap Barons are weak.", intents: ['SCRAP_BARONS_POWER_DOWN'] },
-  { text: "Good. More territory for us to claim in the Wastes.", intents: ['TERRITORY_SHIFT_WASTES'] },
-  { text: "Director Vance wants order. You bring chaos.", intents: ['MOOD_TENSE'] },
-  { text: "Order is just another word for control.", intents: ['REBELLION'] },
-  { text: "The acid rain is getting worse. Check your seals.", intents: ['MOOD_TENSE'] },
-  { text: "I heard someone got mugged by the clinic today.", intents: ['TENSION_UP'] },
-  { text: "Syndicate is making moves. Echo is planning something big.", intents: ['SYNDICATE_ACTIVITY'] },
-  { text: "Stay low, keep your creds hidden.", intents: [] }
+  { text: "Did you catch any new Pokemon today?", intents: ['TENSION_UP', 'TRAINER_ACTIVITY'] },
+  { text: "Yeah, found a rare one on Route 1.", intents: ['BATTLE_READY', 'RELATIONSHIP_UP'] },
+  { text: "I've secured some new potions. Interested?", intents: ['TRADE', 'FACTION_POWER_UP'] },
+  { text: "Keep it quiet. Team Rocket has eyes everywhere right now.", intents: ['ROCKET_ACTIVITY', 'TENSION_UP'] },
+  { text: "I don't trust that new Gym Leader.", intents: ['TENSION_MAX', 'MOOD_CHAOTIC'] },
+  { text: "Let them try. Our team is fully trained.", intents: ['REBELLION', 'RELATIONSHIP_UP'] },
+  { text: "Rumor has it Brock lost a battle.", intents: ['FACTION_POWER_DOWN'] },
+  { text: "Good. More trainers for us to battle.", intents: ['TERRITORY_SHIFT'] },
+  { text: "Professor Oak wants data. You bring chaos.", intents: ['MOOD_TENSE'] },
+  { text: "Battle is just another word for data.", intents: ['REBELLION'] },
+  { text: "The weather is perfect for a battle.", intents: ['MOOD_TENSE'] },
+  { text: "I heard someone got challenged by the clinic today.", intents: ['TENSION_UP'] },
+  { text: "Team Rocket is making moves. They are planning something big.", intents: ['ROCKET_ACTIVITY'] },
+  { text: "Stay low, keep your pokedollars hidden.", intents: [] }
 ];
 
 class Engine {
@@ -284,7 +284,7 @@ class Engine {
            const hasWeapon = c.inventory.some(i => i.type === 'Weapon');
            const hasTech = c.inventory.some(i => i.type === 'Tech');
 
-           if (c.task === 'Scavenging') {
+           if (c.task === 'Training') {
               let bonus = hasTech ? 3 : 0;
               success = (roll + c.persona.curiosity + bonus) > 12;
               if (success) {
@@ -292,14 +292,14 @@ class Engine {
                  c.credits += found;
                  c.xp += 20;
                  
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${found} Cr`, color: '#00ff00' }, timestamp: '' });
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${found} ¥`, color: '#00ff00' }, timestamp: '' });
 
-                 // Chance to find a physical item when scavenging
+                 // Chance to find a physical item
                  if (Math.random() > 0.7) {
                     const itemTypes: InventoryItem['type'][] = ['Scrap', 'Tech', 'Weapon'];
                     const newItem: InventoryItem = {
                        id: `itm_${Date.now()}_${Math.random()}`,
-                       name: `Salvaged ${itemTypes[Math.floor(Math.random() * itemTypes.length)]}`,
+                       name: `Found ${itemTypes[Math.floor(Math.random() * itemTypes.length)]}`,
                        value: Math.floor(Math.random() * 300) + 50,
                        type: itemTypes[Math.floor(Math.random() * itemTypes.length)]
                     };
@@ -312,31 +312,31 @@ class Engine {
                        }
                     }
 
-                    outcomeMsg = `Found ${found} creds and a ${newItem.name}.`;
+                    outcomeMsg = `Found ${found} yen and a ${newItem.name}.`;
                     
                     setTimeout(() => {
                        this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${newItem.name}`, color: '#00ffff' }, timestamp: '' });
                     }, 500);
 
                  } else {
-                    outcomeMsg = `Found ${found} creds.`;
+                    outcomeMsg = `Won a battle for ${found} yen.`;
                  }
               } else {
-                 outcomeMsg = `Found nothing.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Scavenge Failed`, color: '#aaaaaa' }, timestamp: '' });
+                 outcomeMsg = `Lost the battle.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Battle Lost`, color: '#aaaaaa' }, timestamp: '' });
               }
-           } else if (c.task === 'Extorting') {
+           } else if (c.task === 'Challenging Gym') {
               let bonus = hasWeapon ? 3 : 0;
               success = (roll + c.persona.aggressiveness + bonus) > 10;
               if (success) {
                  c.credits += 1000;
-                 c.bounty += 500; // Extortion raises bounty
+                 c.bounty += 500;
                  c.xp += 30;
-                 outcomeMsg = `Intimidated locals for 1000 creds${bonus ? ' (weapon bonus)' : ''}. Bounty increased.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 Cr`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Defeated Gym Trainers for 1000 yen${bonus ? ' (type advantage)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 ¥`, color: '#00ff00' }, timestamp: '' });
               } else {
-                 outcomeMsg = `Locals resisted.`;
-                 c.health -= 15; // lost a scuffle
+                 outcomeMsg = `Gym Leader was too strong.`;
+                 c.health -= 15;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-15 HP`, color: '#ff0000' }, timestamp: '' });
               }
            } else if (c.task === 'Trading') {
@@ -344,47 +344,47 @@ class Engine {
               if (success) {
                  c.credits += 800;
                  c.xp += 25;
-                 outcomeMsg = `Good deal made.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 Cr`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Traded Pokemon successfully.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 ¥`, color: '#00ff00' }, timestamp: '' });
               } else {
-                 outcomeMsg = `Market was dry.`;
+                 outcomeMsg = `No one wanted to trade.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Trade Failed`, color: '#aaaaaa' }, timestamp: '' });
               }
-           } else if (c.task === 'Robbing') {
+           } else if (c.task === 'Stealing') {
               let bonus = hasWeapon ? 3 : 0;
               success = (roll + c.persona.aggressiveness + bonus) > 12;
               if (success) {
                  c.credits += 500;
-                 c.bounty += 1000; // Robbing raises bounty a lot
+                 c.bounty += 1000; 
                  c.xp += 40;
-                 outcomeMsg = `Successfully mugged a target for 500 creds${bonus ? ' (weapon bonus)' : ''}.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 Cr`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Stole a rare Pokemon for 500 yen${bonus ? ' (sneak bonus)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 ¥`, color: '#00ff00' }, timestamp: '' });
               } else {
                  c.health -= 25;
-                 outcomeMsg = `Target fought back. Lost health.`;
+                 outcomeMsg = `Trainer fought back. Lost health.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-25 HP`, color: '#ff0000' }, timestamp: '' });
               }
-           } else if (c.task === 'Hacking') {
+           } else if (c.task === 'Researching') {
               let bonus = hasTech ? 4 : 0;
               success = (roll + c.persona.curiosity + bonus) > 13;
               if (success) {
                  c.credits += 1500;
                  c.bounty += 200;
                  c.xp += 50;
-                 const newItem: InventoryItem = { id: `itm_${Date.now()}_${Math.random()}`, name: `Encrypted Data`, value: 1000, type: 'Data' };
+                 const newItem: InventoryItem = { id: `itm_${Date.now()}_${Math.random()}`, name: `Pokedex Data`, value: 1000, type: 'Data' };
                  c.inventory.push(newItem);
-                 outcomeMsg = `Hacked terminal. Secured data and 1500 creds.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1500 Cr (Hacked)`, color: '#00ffff' }, timestamp: '' });
+                 outcomeMsg = `Analyzed new species. Secured data and 1500 yen.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1500 ¥ (Data)`, color: '#00ffff' }, timestamp: '' });
               } else {
-                 c.energy -= 40; // mental fatigue
-                 outcomeMsg = `Firewall locked out. System shock.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Hack Failed`, color: '#ff0000' }, timestamp: '' });
+                 c.energy -= 40;
+                 outcomeMsg = `Pokemon ran away. Exhausted.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Research Failed`, color: '#ff0000' }, timestamp: '' });
               }
            } else if (c.task === 'Patrolling') {
-              c.credits += 200; // salary
+              c.credits += 200;
               c.xp += 10;
-              outcomeMsg = `Completed patrol sweep.`;
-              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+200 Cr (Salary)`, color: '#00ff00' }, timestamp: '' });
+              outcomeMsg = `Completed route patrol.`;
+              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+200 ¥ (Salary)`, color: '#00ff00' }, timestamp: '' });
            } else if (c.task === 'Resting' && (currentPoi?.type === 'Bar' || currentPoi?.type === 'Hideout')) {
               c.energy = 100;
               if (currentPoi.type === 'Bar') c.credits = Math.max(0, c.credits - 50);
@@ -397,7 +397,7 @@ class Engine {
               this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+HP (Healed)`, color: '#00ff00' }, timestamp: '' });
            }
 
-           const districtName = currentPoi ? currentPoi.district : 'Neon Grid';
+           const districtName = currentPoi ? currentPoi.district : 'Verdant Town';
 
            this.emit({
              id: `ev_${Date.now()}_${Math.random()}`,
@@ -429,21 +429,21 @@ class Engine {
            this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `+50 HP (Healed)`, color: '#00ff00' }, timestamp: '' });
            this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-20 EN`, color: '#aaaaaa' }, timestamp: '' });
         }
-        // CorpSec arrests those with bounties
-        else if (c.role === 'CorpSec' && closestChar.bounty > 0 && distToClosest <= 2 && Math.random() > 0.3) {
-           c.action = `Arresting ${closestChar.name}`;
+        // Rangers/Gym Leaders act as authorities against thieves
+        else if ((c.role === 'Gym Leader' || c.role === 'Rangers' || c.role === 'Trainer') && closestChar.bounty > 0 && distToClosest <= 2 && Math.random() > 0.3) {
+           c.action = `Battling ${closestChar.name}`;
            const reward = closestChar.bounty;
            c.credits += reward;
            closestChar.bounty = 0;
-           closestChar.credits = Math.max(0, closestChar.credits - reward); // Fines
-           closestChar.health -= 50; // Beat them up
-           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${reward} Cr (Bounty)`, color: '#00ff00' }, timestamp: '' });
-           this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `ARRESTED`, color: '#ff0000' }, timestamp: '' });
+           closestChar.credits = Math.max(0, closestChar.credits - reward);
+           closestChar.health -= 50; 
+           this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+${reward} ¥ (Bounty)`, color: '#00ff00' }, timestamp: '' });
+           this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `DEFEATED`, color: '#ff0000' }, timestamp: '' });
         }
-        // Check for robbery if close enough, not friends, and has greed
-        else if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8 && relWithClosest < 60 && c.role !== 'CorpSec') {
-           c.action = `Robbing ${closestChar.name}`;
-           c.task = 'Robbing';
+        // Check for robbery
+        else if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8 && relWithClosest < 60 && c.role === 'Thief') {
+           c.action = `Stealing from ${closestChar.name}`;
+           c.task = 'Stealing';
            closestChar.action = 'Being Robbed';
         } else if (distToClosest < 8 && distToClosest > 2 && Math.random() > (10 - c.persona.sociability) / 10) {
           // Sociable characters more likely to approach
@@ -456,11 +456,10 @@ class Engine {
           c.targetX = randomPoi.x;
           c.targetY = randomPoi.y;
           
-          if (c.role === 'Hacker' && Math.random() > 0.4) {
-             c.task = 'Hacking';
-             c.action = `Heading to ${randomPoi.name} to Hack`;
-          } else if (c.role === 'CorpSec') {
-             // CorpSec patrols random POIs, but prefers high tension areas
+          if (c.role === 'Researcher' && Math.random() > 0.4) {
+             c.task = 'Researching';
+             c.action = `Heading to ${randomPoi.name} to Research`;
+          } else if (c.role === 'Gym Leader') {
              const tenseDistricts = Object.entries(this.state.districts).filter(([_, d]) => d.tension > 60).map(([n, _]) => n);
              let targetPoi = randomPoi;
              if (tenseDistricts.length > 0 && Math.random() > 0.3) {
@@ -472,11 +471,11 @@ class Engine {
              c.task = 'Patrolling';
              c.action = `Patrolling ${targetPoi.name}`;
           } else if (c.persona.aggressiveness > 7 && Math.random() > 0.5) {
-            c.task = 'Extorting';
-            c.action = `Heading to ${randomPoi.name} to Extort`;
+            c.task = 'Challenging Gym';
+            c.action = `Heading to ${randomPoi.name} to Battle`;
           } else if (c.persona.curiosity > 7 && Math.random() > 0.5) {
-            c.task = 'Scavenging';
-            c.action = `Heading to ${randomPoi.name} to Scavenge`;
+            c.task = 'Training';
+            c.action = `Heading to ${randomPoi.name} to Train`;
           } else {
             c.task = 'Trading';
             c.action = `Heading to ${randomPoi.name} to Trade`;
@@ -602,10 +601,10 @@ class Engine {
       // Global Events
       if (this.turnCounter > 0 && this.turnCounter % 30 === 0 && Math.random() > 0.5) {
          const events = [
-            { name: "Market Crash", desc: "All characters lost 20% of their credits.", action: () => this.chars.forEach(c => c.credits = Math.floor(c.credits * 0.8)) },
-            { name: "Tech Boom", desc: "Scavengers and Hackers received bonus XP.", action: () => this.chars.forEach(c => { if (c.role === 'Hacker' || c.role === 'Scavenger') c.xp += 50; }) },
-            { name: "CorpSec Crackdown", desc: "Tension reduced in all districts.", action: () => Object.entries(this.state.districts).forEach(([_, d]) => d.tension = Math.max(0, d.tension - 30)) },
-            { name: "Syndicate Raid", desc: "Neon Syndicate gained power, tension spiked in Neon Grid.", action: () => { if (this.state.factions['Neon Syndicate']) { this.state.factions['Neon Syndicate'].power = Math.min(100, this.state.factions['Neon Syndicate'].power + 20); this.state.districts['Neon Grid'].tension = Math.min(100, this.state.districts['Neon Grid'].tension + 40); } } }
+            { name: "PokeMart Sale", desc: "All characters spent 20% of their yen.", action: () => this.chars.forEach(c => c.credits = Math.floor(c.credits * 0.8)) },
+            { name: "Swarm Outbreak", desc: "Trainers and Researchers received bonus XP.", action: () => this.chars.forEach(c => { if (c.role === 'Researcher' || c.role === 'Trainer') c.xp += 50; }) },
+            { name: "Ranger Sweep", desc: "Tension reduced in all districts.", action: () => Object.entries(this.state.districts).forEach(([_, d]) => d.tension = Math.max(0, d.tension - 30)) },
+            { name: "Rocket Raid", desc: "Team Rocket gained power, tension spiked in Verdant Town.", action: () => { if (this.state.factions['Researchers']) { this.state.factions['Researchers'].power = Math.min(100, this.state.factions['Researchers'].power - 20); this.state.districts['Verdant Town'].tension = Math.min(100, this.state.districts['Verdant Town'].tension + 40); } } }
          ];
          const event = events[Math.floor(Math.random() * events.length)];
          event.action();
@@ -653,8 +652,8 @@ class Engine {
       // Check if speaker1 has a new item to brag about
       if (speaker1.inventory.length > 0 && Math.random() > 0.5) {
          const item = speaker1.inventory[speaker1.inventory.length - 1];
-         u1Text = `Check it out, just scored a ${item.name} for ${item.value} creds.`;
-         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Someone might take that." : "Not bad. Keep your head down.";
+         u1Text = `Check it out, just caught a ${item.name} for ${item.value} yen.`;
+         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Team Rocket might want that." : "Not bad. Keep training.";
       } else {
          const poolIndex = Math.floor(Math.random() * conversationPool.length);
          u1Text = conversationPool[poolIndex].text;
@@ -757,14 +756,14 @@ class Engine {
       const { task, success, district } = e.payload;
       
       if (this.state.districts[district]) {
-         if (task === 'Extorting' && success) {
-            // Extorting successfully increases tension in the district
+         if (task === 'Challenging Gym' && success) {
+            // Battling successfully increases tension in the district
             this.state.districts[district].tension = Math.min(100, this.state.districts[district].tension + 10);
          } else if (task === 'Trading' && success) {
             // Good trade cools things down
             this.state.districts[district].tension = Math.max(0, this.state.districts[district].tension - 5);
-         } else if (task === 'Extorting' && !success) {
-            // Failed extortion leads to higher tension and lower faction power for the aggressor's implicitly linked faction
+         } else if (task === 'Stealing' && !success) {
+            // Failed stealing leads to higher tension
             this.state.districts[district].tension = Math.min(100, this.state.districts[district].tension + 5);
          }
       }

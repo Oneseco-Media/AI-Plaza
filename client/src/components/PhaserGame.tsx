@@ -437,10 +437,10 @@ export default function PhaserGame() {
             </div>
 
             {/* Event Log */}
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-3 rounded-xl shadow-lg pointer-events-auto w-80 h-48 flex flex-col mt-4">
-               <h2 className="font-bold text-sm text-gray-700 mb-2 uppercase tracking-wide border-b border-gray-200 pb-1">Event Log</h2>
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-3 rounded-xl shadow-lg pointer-events-auto w-64 h-24 flex flex-col mt-4">
+               <h2 className="font-bold text-sm text-gray-700 mb-1 uppercase tracking-wide border-b border-gray-200 pb-1">Event Log</h2>
                <div className="overflow-y-auto font-sans text-[10px] space-y-1 flex-1 pr-1 flex flex-col-reverse">
-                 {engineState.events.map((e, i) => (
+                 {engineState.events.slice(0, 8).map((e, i) => (
                     <div key={e.id} className="opacity-80">
                       <span className="text-gray-400 mr-1">[{e.timestamp}]</span>
                       <span className={`
