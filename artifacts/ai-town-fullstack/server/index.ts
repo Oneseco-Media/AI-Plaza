@@ -45,14 +45,16 @@ if (isProduction) {
     throw new Error(`Build directory not found: ${distPath}. Run "pnpm build" first.`);
   }
 
-  // Serve static assets
-  app.use(express.static(distPath));
-
-  // SPA fallback — catch-all middleware sends index.html for unmatched routes
-  // Using a plain middleware (no path pattern) avoids Express 5 path-to-regexp wildcard issues
-  app.use((_req, res) => {
+  // Mount a sub-router at basePath so that Vite-built assets like
+  // /ai-town-fullstack/assets/index.js are resolved to dist/public/assets/index.js.
+  // Using a Router avoids Express 5 path-to-regexp wildcard issues while keeping
+  // the SPA fallback correctly scoped to the base path.
+  const frontendRouter = express.Router();
+  frontendRouter.use(express.static(distPath));
+  frontendRouter.use((_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
+  app.use(basePath, frontendRouter);
 } else {
   // In development, use Vite dev server as middleware
   const { createServer: createViteServer } = await import("vite");
