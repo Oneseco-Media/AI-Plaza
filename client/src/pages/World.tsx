@@ -26,6 +26,17 @@ export default function World() {
       {/* Controls HUD */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-2 p-2 bg-black/60 backdrop-blur-md border border-primary/30 rounded-full shadow-[0_0_15px_rgba(0,255,255,0.2)]">
          <Button 
+            size="sm"
+            variant="outline"
+            className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary font-mono text-xs"
+            onClick={() => {
+              for (let i = 0; i < 20; i++) worldEngine.advanceTurn();
+            }}
+         >
+           RAPID x20
+         </Button>
+
+         <Button 
             size="icon"
             variant="outline"
             className="rounded-full border-secondary text-secondary hover:bg-secondary/20 hover:text-secondary"
