@@ -46,7 +46,7 @@ export type Event = {
 export type Character = {
   id: string;
   name: string;
-  role: 'Trainer' | 'Medic' | 'Gym Leader' | 'Researcher' | 'Thief' | 'Rival';
+  role: 'Warrior' | 'Mage' | 'Rogue' | 'Cleric' | 'Paladin' | 'Merchant';
   persona: Persona;
   faction: string | null;
   color: number; // Hex color for Phaser
@@ -111,39 +111,39 @@ export const initialWorldState: WorldState = {
 
 // Map size 50x40, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', role: 'Hacker', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, faction: null, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 1500, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c2', name: 'Cipher', role: 'Fixer', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, faction: 'Synapse Cartel', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 8000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c3', name: 'Krieg', role: 'Enforcer', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, faction: 'Scrap Barons', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 450, bounty: 5000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c4', name: 'Vance', role: 'CorpSec', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, faction: 'CorpSec', color: 0x44ff44, x: 45, y: 35, targetX: 45, targetY: 35, energy: 100, health: 100, action: 'Idle', task: null, credits: 50000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c5', name: 'Jax', role: 'Scavenger', persona: { trait: 'Resourceful survivor', aggressiveness: 3, sociability: 6, greed: 5, curiosity: 10 }, faction: 'Scrap Barons', color: 0xaaaa00, x: 8, y: 30, targetX: 8, targetY: 30, energy: 100, health: 100, action: 'Idle', task: null, credits: 200, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c6', name: 'Doc', role: 'Medic', persona: { trait: 'Underground surgeon', aggressiveness: 1, sociability: 9, greed: 4, curiosity: 8 }, faction: null, color: 0xffffff, x: 20, y: 25, targetX: 20, targetY: 25, energy: 100, health: 100, action: 'Idle', task: null, credits: 3000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c7', name: 'Rogue', role: 'Enforcer', persona: { trait: 'Trigger-happy merc', aggressiveness: 9, sociability: 3, greed: 8, curiosity: 2 }, faction: 'Synapse Cartel', color: 0xff0044, x: 25, y: 10, targetX: 25, targetY: 10, energy: 100, health: 100, action: 'Idle', task: null, credits: 1200, bounty: 2000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c8', name: 'Echo', role: 'Hacker', persona: { trait: 'Silent phantom', aggressiveness: 2, sociability: 1, greed: 6, curiosity: 9 }, faction: 'Neon Syndicate', color: 0x4400ff, x: 40, y: 5, targetX: 40, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 5000, bounty: 1000, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c9', name: 'Junker', role: 'Scavenger', persona: { trait: 'Waste dweller', aggressiveness: 4, sociability: 4, greed: 7, curiosity: 8 }, faction: 'Scrap Barons', color: 0xaa5500, x: 2, y: 2, targetX: 2, targetY: 2, energy: 100, health: 100, action: 'Idle', task: null, credits: 50, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c10', name: 'Splicer', role: 'Medic', persona: { trait: 'Cyber-doc', aggressiveness: 3, sociability: 5, greed: 6, curiosity: 7 }, faction: 'Synapse Cartel', color: 0x00ffaa, x: 35, y: 8, targetX: 35, targetY: 8, energy: 100, health: 100, action: 'Idle', task: null, credits: 2000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c11', name: 'Ghost', role: 'Hacker', persona: { trait: 'Rogue AI', aggressiveness: 1, sociability: 1, greed: 2, curiosity: 10 }, faction: 'Neon Syndicate', color: 0xffffff, x: 42, y: 38, targetX: 42, targetY: 38, energy: 100, health: 100, action: 'Idle', task: null, credits: 10000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c12', name: 'Tank', role: 'CorpSec', persona: { trait: 'Heavy assault', aggressiveness: 8, sociability: 2, greed: 4, curiosity: 2 }, faction: 'CorpSec', color: 0x00ff00, x: 45, y: 36, targetX: 45, targetY: 36, energy: 100, health: 100, action: 'Idle', task: null, credits: 1000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c13', name: 'Blitz', role: 'Enforcer', persona: { trait: 'Speed freak', aggressiveness: 8, sociability: 4, greed: 5, curiosity: 6 }, faction: 'Neon Syndicate', color: 0xffff00, x: 15, y: 35, targetX: 15, targetY: 35, energy: 100, health: 100, action: 'Idle', task: null, credits: 600, bounty: 1500, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c14', name: 'Silk', role: 'Fixer', persona: { trait: 'Smooth talker', aggressiveness: 2, sociability: 10, greed: 9, curiosity: 7 }, faction: 'Synapse Cartel', color: 0xff66cc, x: 20, y: 15, targetX: 20, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 15000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
-  { id: 'c15', name: 'Rust', role: 'Scavenger', persona: { trait: 'Metal hoarder', aggressiveness: 5, sociability: 3, greed: 8, curiosity: 6 }, faction: 'Scrap Barons', color: 0x884400, x: 5, y: 38, targetX: 5, targetY: 38, energy: 100, health: 100, action: 'Idle', task: null, credits: 80, bounty: 200, inventory: [], equipped: null, level: 1, xp: 0, squadId: null }
+  { id: 'c1', name: 'Arthur', role: 'Warrior', persona: { trait: 'Brave', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, faction: null, color: 0xff0000, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 1500, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c2', name: 'Gareth', role: 'Paladin', persona: { trait: 'Righteous', aggressiveness: 8, sociability: 4, greed: 8, curiosity: 6 }, faction: 'Fighters Guild', color: 0x0000ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 8000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c3', name: 'Borin', role: 'Warrior', persona: { trait: 'Stout', aggressiveness: 6, sociability: 8, greed: 2, curiosity: 3 }, faction: 'Fighters Guild', color: 0xaa5500, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 450, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c4', name: 'Elara', role: 'Mage', persona: { trait: 'Mystical', aggressiveness: 7, sociability: 6, greed: 4, curiosity: 4 }, faction: 'Mages Circle', color: 0x00aaff, x: 45, y: 35, targetX: 45, targetY: 35, energy: 100, health: 100, action: 'Idle', task: null, credits: 5000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c5', name: 'Finn', role: 'Rogue', persona: { trait: 'Nimble', aggressiveness: 3, sociability: 6, greed: 5, curiosity: 10 }, faction: 'Thieves Guild', color: 0x00ff00, x: 8, y: 30, targetX: 8, targetY: 30, energy: 100, health: 100, action: 'Idle', task: null, credits: 200, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c6', name: 'Serena', role: 'Cleric', persona: { trait: 'Healing', aggressiveness: 1, sociability: 9, greed: 1, curiosity: 4 }, faction: null, color: 0xffbbbb, x: 20, y: 25, targetX: 20, targetY: 25, energy: 100, health: 100, action: 'Idle', task: null, credits: 3000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c7', name: 'Kael', role: 'Warrior', persona: { trait: 'Fierce', aggressiveness: 5, sociability: 7, greed: 4, curiosity: 2 }, faction: 'Fighters Guild', color: 0x884400, x: 25, y: 10, targetX: 25, targetY: 10, energy: 100, health: 100, action: 'Idle', task: null, credits: 1200, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c8', name: 'Lyra', role: 'Mage', persona: { trait: 'Friendly', aggressiveness: 2, sociability: 8, greed: 2, curiosity: 6 }, faction: 'Mages Circle', color: 0xffaa00, x: 40, y: 5, targetX: 40, targetY: 5, energy: 100, health: 100, action: 'Idle', task: null, credits: 500, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c9', name: 'Puck', role: 'Rogue', persona: { trait: 'Eager', aggressiveness: 6, sociability: 6, greed: 3, curiosity: 5 }, faction: 'Thieves Guild', color: 0x4444ff, x: 2, y: 2, targetX: 2, targetY: 2, energy: 100, health: 100, action: 'Idle', task: null, credits: 150, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c10', name: 'Marina', role: 'Merchant', persona: { trait: 'Charismatic', aggressiveness: 4, sociability: 5, greed: 8, curiosity: 7 }, faction: null, color: 0x00ccff, x: 35, y: 8, targetX: 35, targetY: 8, energy: 100, health: 100, action: 'Idle', task: null, credits: 2000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c11', name: 'Merlin', role: 'Mage', persona: { trait: 'Wise', aggressiveness: 1, sociability: 9, greed: 2, curiosity: 10 }, faction: 'Mages Circle', color: 0xffffff, x: 42, y: 38, targetX: 42, targetY: 38, energy: 100, health: 100, action: 'Idle', task: null, credits: 10000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c12', name: 'Shadow', role: 'Rogue', persona: { trait: 'Malicious', aggressiveness: 8, sociability: 2, greed: 9, curiosity: 2 }, faction: 'Thieves Guild', color: 0x222222, x: 45, y: 36, targetX: 45, targetY: 36, energy: 100, health: 100, action: 'Idle', task: null, credits: 1000, bounty: 500, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c13', name: 'Leon', role: 'Paladin', persona: { trait: 'Skilled', aggressiveness: 8, sociability: 4, greed: 5, curiosity: 6 }, faction: 'Fighters Guild', color: 0xffff00, x: 15, y: 35, targetX: 15, targetY: 35, energy: 100, health: 100, action: 'Idle', task: null, credits: 3600, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c14', name: 'Alden', role: 'Merchant', persona: { trait: 'Analytical', aggressiveness: 2, sociability: 5, greed: 4, curiosity: 9 }, faction: null, color: 0xdddddd, x: 20, y: 15, targetX: 20, targetY: 15, energy: 100, health: 100, action: 'Idle', task: null, credits: 5000, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null },
+  { id: 'c15', name: 'Thorne', role: 'Warrior', persona: { trait: 'Outdoorsy', aggressiveness: 5, sociability: 7, greed: 2, curiosity: 6 }, faction: 'Rangers Guild', color: 0x22aa22, x: 5, y: 38, targetX: 5, targetY: 38, energy: 100, health: 100, action: 'Idle', task: null, credits: 280, bounty: 0, inventory: [], equipped: null, level: 1, xp: 0, squadId: null }
 ];
 
 // Mock Conversational Data
 const conversationPool = [
-  { text: "Did you catch any new Pokemon today?", intents: ['TENSION_UP', 'TRAINER_ACTIVITY'] },
-  { text: "Yeah, found a rare one on Route 1.", intents: ['BATTLE_READY', 'RELATIONSHIP_UP'] },
-  { text: "I've secured some new potions. Interested?", intents: ['TRADE', 'FACTION_POWER_UP'] },
-  { text: "Keep it quiet. Team Rocket has eyes everywhere right now.", intents: ['ROCKET_ACTIVITY', 'TENSION_UP'] },
-  { text: "I don't trust that new Gym Leader.", intents: ['TENSION_MAX', 'MOOD_CHAOTIC'] },
-  { text: "Let them try. Our team is fully trained.", intents: ['REBELLION', 'RELATIONSHIP_UP'] },
-  { text: "Rumor has it Brock lost a battle.", intents: ['FACTION_POWER_DOWN'] },
-  { text: "Good. More trainers for us to battle.", intents: ['TERRITORY_SHIFT'] },
-  { text: "Professor Oak wants data. You bring chaos.", intents: ['MOOD_TENSE'] },
-  { text: "Battle is just another word for data.", intents: ['REBELLION'] },
-  { text: "The weather is perfect for a battle.", intents: ['MOOD_TENSE'] },
-  { text: "I heard someone got challenged by the clinic today.", intents: ['TENSION_UP'] },
-  { text: "Team Rocket is making moves. They are planning something big.", intents: ['ROCKET_ACTIVITY'] },
-  { text: "Stay low, keep your pokedollars hidden.", intents: [] }
+  { text: "Did you clear that dungeon today?", intents: ['TENSION_UP', 'QUEST_ACTIVITY'] },
+  { text: "Aye, found a rare amulet on level 1.", intents: ['BATTLE_READY', 'RELATIONSHIP_UP'] },
+  { text: "I've secured some new health potions. Interested?", intents: ['TRADE', 'FACTION_POWER_UP'] },
+  { text: "Keep it quiet. The Thieves Guild has eyes everywhere right now.", intents: ['THIEF_ACTIVITY', 'TENSION_UP'] },
+  { text: "I don't trust that new Guild Master.", intents: ['TENSION_MAX', 'MOOD_CHAOTIC'] },
+  { text: "Let them try. Our party is fully equipped.", intents: ['REBELLION', 'RELATIONSHIP_UP'] },
+  { text: "Rumor has it Gareth lost a duel.", intents: ['FACTION_POWER_DOWN'] },
+  { text: "Good. More glory for us.", intents: ['TERRITORY_SHIFT'] },
+  { text: "Merlin wants artifacts. You bring chaos.", intents: ['MOOD_TENSE'] },
+  { text: "Combat is just another word for glory.", intents: ['REBELLION'] },
+  { text: "The weather is perfect for an adventure.", intents: ['MOOD_TENSE'] },
+  { text: "I heard someone got ambushed by the tavern today.", intents: ['TENSION_UP'] },
+  { text: "The Mages Circle is making moves. They are planning something big.", intents: ['MAGE_ACTIVITY'] },
+  { text: "Stay low, keep your gold hidden.", intents: [] }
 ];
 
 class Engine {
@@ -325,17 +325,17 @@ class Engine {
                  outcomeMsg = `Lost the battle.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Battle Lost`, color: '#aaaaaa' }, timestamp: '' });
               }
-           } else if (c.task === 'Challenging Gym') {
+           } else if (c.task === 'Clearing Dungeon') {
               let bonus = hasWeapon ? 3 : 0;
               success = (roll + c.persona.aggressiveness + bonus) > 10;
               if (success) {
                  c.credits += 1000;
                  c.bounty += 500;
                  c.xp += 30;
-                 outcomeMsg = `Defeated Gym Trainers for 1000 yen${bonus ? ' (type advantage)' : ''}.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 ¥`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Defeated monsters for 1000 gold${bonus ? ' (weapon advantage)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1000 G`, color: '#00ff00' }, timestamp: '' });
               } else {
-                 outcomeMsg = `Gym Leader was too strong.`;
+                 outcomeMsg = `Boss was too strong.`;
                  c.health -= 15;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-15 HP`, color: '#ff0000' }, timestamp: '' });
               }
@@ -344,8 +344,8 @@ class Engine {
               if (success) {
                  c.credits += 800;
                  c.xp += 25;
-                 outcomeMsg = `Traded Pokemon successfully.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 ¥`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Traded goods successfully.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+800 G`, color: '#00ff00' }, timestamp: '' });
               } else {
                  outcomeMsg = `No one wanted to trade.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Trade Failed`, color: '#aaaaaa' }, timestamp: '' });
@@ -357,11 +357,11 @@ class Engine {
                  c.credits += 500;
                  c.bounty += 1000; 
                  c.xp += 40;
-                 outcomeMsg = `Stole a rare Pokemon for 500 yen${bonus ? ' (sneak bonus)' : ''}.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 ¥`, color: '#00ff00' }, timestamp: '' });
+                 outcomeMsg = `Stole a rare artifact for 500 gold${bonus ? ' (sneak bonus)' : ''}.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+500 G`, color: '#00ff00' }, timestamp: '' });
               } else {
                  c.health -= 25;
-                 outcomeMsg = `Trainer fought back. Lost health.`;
+                 outcomeMsg = `Guards fought back. Lost health.`;
                  this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-25 HP`, color: '#ff0000' }, timestamp: '' });
               }
            } else if (c.task === 'Researching') {
@@ -371,20 +371,20 @@ class Engine {
                  c.credits += 1500;
                  c.bounty += 200;
                  c.xp += 50;
-                 const newItem: InventoryItem = { id: `itm_${Date.now()}_${Math.random()}`, name: `Pokedex Data`, value: 1000, type: 'Data' };
+                 const newItem: InventoryItem = { id: `itm_${Date.now()}_${Math.random()}`, name: `Ancient Scroll`, value: 1000, type: 'Data' };
                  c.inventory.push(newItem);
-                 outcomeMsg = `Analyzed new species. Secured data and 1500 yen.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1500 ¥ (Data)`, color: '#00ffff' }, timestamp: '' });
+                 outcomeMsg = `Deciphered runes. Secured scroll and 1500 gold.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+1500 G (Scroll)`, color: '#00ffff' }, timestamp: '' });
               } else {
                  c.energy -= 40;
-                 outcomeMsg = `Pokemon ran away. Exhausted.`;
-                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Research Failed`, color: '#ff0000' }, timestamp: '' });
+                 outcomeMsg = `Runes faded. Exhausted.`;
+                 this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `Scribing Failed`, color: '#ff0000' }, timestamp: '' });
               }
            } else if (c.task === 'Patrolling') {
               c.credits += 200;
               c.xp += 10;
               outcomeMsg = `Completed route patrol.`;
-              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+200 ¥ (Salary)`, color: '#00ff00' }, timestamp: '' });
+              this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `+200 G (Salary)`, color: '#00ff00' }, timestamp: '' });
            } else if (c.task === 'Resting' && (currentPoi?.type === 'Bar' || currentPoi?.type === 'Hideout')) {
               c.energy = 100;
               if (currentPoi.type === 'Bar') c.credits = Math.max(0, c.credits - 50);
@@ -429,8 +429,8 @@ class Engine {
            this.emit({ id: `float_${Date.now()}`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `+50 HP (Healed)`, color: '#00ff00' }, timestamp: '' });
            this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: c.id, text: `-20 EN`, color: '#aaaaaa' }, timestamp: '' });
         }
-        // Rangers/Gym Leaders act as authorities against thieves
-        else if ((c.role === 'Gym Leader' || c.role === 'Rangers' || c.role === 'Trainer') && closestChar.bounty > 0 && distToClosest <= 2 && Math.random() > 0.3) {
+        // Paladins/Warriors act as authorities against thieves
+        else if ((c.role === 'Paladin' || c.role === 'Warrior' || c.role === 'Cleric') && closestChar.bounty > 0 && distToClosest <= 2 && Math.random() > 0.3) {
            c.action = `Battling ${closestChar.name}`;
            const reward = closestChar.bounty;
            c.credits += reward;
@@ -459,7 +459,7 @@ class Engine {
           if (c.role === 'Researcher' && Math.random() > 0.4) {
              c.task = 'Researching';
              c.action = `Heading to ${randomPoi.name} to Research`;
-          } else if (c.role === 'Gym Leader') {
+          } else if (c.role === 'Paladin') {
              const tenseDistricts = Object.entries(this.state.districts).filter(([_, d]) => d.tension > 60).map(([n, _]) => n);
              let targetPoi = randomPoi;
              if (tenseDistricts.length > 0 && Math.random() > 0.3) {
@@ -471,7 +471,7 @@ class Engine {
              c.task = 'Patrolling';
              c.action = `Patrolling ${targetPoi.name}`;
           } else if (c.persona.aggressiveness > 7 && Math.random() > 0.5) {
-            c.task = 'Challenging Gym';
+            c.task = 'Clearing Dungeon';
             c.action = `Heading to ${randomPoi.name} to Battle`;
           } else if (c.persona.curiosity > 7 && Math.random() > 0.5) {
             c.task = 'Training';
@@ -601,10 +601,10 @@ class Engine {
       // Global Events
       if (this.turnCounter > 0 && this.turnCounter % 30 === 0 && Math.random() > 0.5) {
          const events = [
-            { name: "PokeMart Sale", desc: "All characters spent 20% of their yen.", action: () => this.chars.forEach(c => c.credits = Math.floor(c.credits * 0.8)) },
-            { name: "Swarm Outbreak", desc: "Trainers and Researchers received bonus XP.", action: () => this.chars.forEach(c => { if (c.role === 'Researcher' || c.role === 'Trainer') c.xp += 50; }) },
-            { name: "Ranger Sweep", desc: "Tension reduced in all districts.", action: () => Object.entries(this.state.districts).forEach(([_, d]) => d.tension = Math.max(0, d.tension - 30)) },
-            { name: "Rocket Raid", desc: "Team Rocket gained power, tension spiked in Verdant Town.", action: () => { if (this.state.factions['Researchers']) { this.state.factions['Researchers'].power = Math.min(100, this.state.factions['Researchers'].power - 20); this.state.districts['Verdant Town'].tension = Math.min(100, this.state.districts['Verdant Town'].tension + 40); } } }
+            { name: "Merchant Guild Sale", desc: "All characters spent 20% of their gold.", action: () => this.chars.forEach(c => c.credits = Math.floor(c.credits * 0.8)) },
+            { name: "Goblin Invasion", desc: "Warriors and Mages received bonus XP.", action: () => this.chars.forEach(c => { if (c.role === 'Mage' || c.role === 'Warrior') c.xp += 50; }) },
+            { name: "Royal Guard Sweep", desc: "Tension reduced in all districts.", action: () => Object.entries(this.state.districts).forEach(([_, d]) => d.tension = Math.max(0, d.tension - 30)) },
+            { name: "Bandit Raid", desc: "Thieves Guild gained power, tension spiked in Elden Forest.", action: () => { if (this.state.factions['Thieves Guild']) { this.state.factions['Thieves Guild'].power = Math.min(100, this.state.factions['Thieves Guild'].power - 20); this.state.districts['Elden Forest'].tension = Math.min(100, this.state.districts['Elden Forest'].tension + 40); } } }
          ];
          const event = events[Math.floor(Math.random() * events.length)];
          event.action();
@@ -652,8 +652,8 @@ class Engine {
       // Check if speaker1 has a new item to brag about
       if (speaker1.inventory.length > 0 && Math.random() > 0.5) {
          const item = speaker1.inventory[speaker1.inventory.length - 1];
-         u1Text = `Check it out, just caught a ${item.name} for ${item.value} yen.`;
-         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Team Rocket might want that." : "Not bad. Keep training.";
+         u1Text = `Check it out, just found a ${item.name} for ${item.value} gold.`;
+         u2Text = speaker2.persona.greed > 5 ? "Watch your back. Thieves might want that." : "Not bad. Keep training.";
       } else {
          const poolIndex = Math.floor(Math.random() * conversationPool.length);
          u1Text = conversationPool[poolIndex].text;
@@ -756,7 +756,7 @@ class Engine {
       const { task, success, district } = e.payload;
       
       if (this.state.districts[district]) {
-         if (task === 'Challenging Gym' && success) {
+         if (task === 'Clearing Dungeon' && success) {
             // Battling successfully increases tension in the district
             this.state.districts[district].tension = Math.min(100, this.state.districts[district].tension + 10);
          } else if (task === 'Trading' && success) {

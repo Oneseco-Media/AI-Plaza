@@ -27,7 +27,7 @@ export default function PhaserGame() {
       width: window.innerWidth,
       height: window.innerHeight,
       parent: gameRef.current,
-      backgroundColor: "#88cc88", // Grass green
+      backgroundColor: "#1a2421", // Dark forest green
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -188,24 +188,24 @@ export default function PhaserGame() {
 
       const bubbleWidth = 180;
       const content = scene.add.text(0, -30, text, {
-        fontFamily: 'sans-serif', fontSize: '11px', color: '#000000', align: 'center', wordWrap: { width: bubbleWidth - 10 }
+        fontFamily: 'sans-serif', fontSize: '11px', color: '#ffffff', align: 'center', wordWrap: { width: bubbleWidth - 10 }
       }).setOrigin(0.5);
 
       const bubbleHeight = content.height + 15;
       content.y = -bubbleHeight / 2;
 
       const bubble = scene.add.graphics({ x: 0, y: 0 });
-      bubble.fillStyle(0xffffff, 0.9);
-      bubble.lineStyle(2, 0xaaaaaa, 1);
+      bubble.fillStyle(0x000000, 0.7);
+      bubble.lineStyle(2, 0x444444, 1);
       
       // Bubble shape
       bubble.fillRoundedRect(-bubbleWidth/2, -bubbleHeight, bubbleWidth, bubbleHeight, 8);
       bubble.strokeRoundedRect(-bubbleWidth/2, -bubbleHeight, bubbleWidth, bubbleHeight, 8);
       
       // Little triangle pointer
-      bubble.fillStyle(0xffffff, 0.9);
+      bubble.fillStyle(0x000000, 0.7);
       bubble.fillTriangle(-5, 0, 5, 0, 0, 10);
-      bubble.lineStyle(2, 0xaaaaaa, 1);
+      bubble.lineStyle(2, 0x444444, 1);
       bubble.strokeTriangle(-5, 0, 5, 0, 0, 10);
 
       const container = scene.add.container(sprite.x, sprite.y - TILE_SIZE, [bubble, content]);
@@ -408,8 +408,8 @@ export default function PhaserGame() {
          
          {/* Top HUD */}
          <div className="flex justify-between items-start">
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg pointer-events-auto w-64">
-               <h1 className="text-xl font-bold text-gray-800 tracking-wide">Pokémon World</h1>
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg pointer-events-auto w-64">
+               <h1 className="text-xl font-bold text-slate-100 tracking-wide">Realm Engine</h1>
                <div className="mt-2 space-y-1 font-sans text-xs">
                  <div className="flex justify-between">
                    <span className="text-muted-foreground">TURN</span>
@@ -437,17 +437,17 @@ export default function PhaserGame() {
             </div>
 
             {/* Event Log */}
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-3 rounded-xl shadow-lg pointer-events-auto w-64 h-24 flex flex-col mt-4">
-               <h2 className="font-bold text-sm text-gray-700 mb-1 uppercase tracking-wide border-b border-gray-200 pb-1">Event Log</h2>
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-3 rounded-xl shadow-lg pointer-events-auto w-64 h-24 flex flex-col mt-4">
+               <h2 className="font-bold text-sm text-slate-200 mb-1 uppercase tracking-wide border-b border-slate-700 pb-1">Event Log</h2>
                <div className="overflow-y-auto font-sans text-[10px] space-y-1 flex-1 pr-1 flex flex-col-reverse">
                  {engineState.events.slice(0, 8).map((e, i) => (
                     <div key={e.id} className="opacity-80">
-                      <span className="text-gray-400 mr-1">[{e.timestamp}]</span>
+                      <span className="text-slate-400 mr-1">[{e.timestamp}]</span>
                       <span className={`
-                        ${e.type === 'SYSTEM_ALERT' ? 'text-red-500 font-bold' : 
-                          e.type === 'TERRITORY_SHIFT' ? 'text-blue-500' : 
-                          e.type === 'TASK_COMPLETED' ? 'text-green-500' :
-                          'text-gray-800'}
+                        ${e.type === 'SYSTEM_ALERT' ? 'text-red-400 font-bold' : 
+                          e.type === 'TERRITORY_SHIFT' ? 'text-blue-400' : 
+                          e.type === 'TASK_COMPLETED' ? 'text-green-400' :
+                          'text-slate-200'}
                       `}>{e.description}</span>
                     </div>
                  ))}
@@ -457,78 +457,78 @@ export default function PhaserGame() {
 
          {/* Right Side HUD - Districts & Characters */}
          <div className="flex flex-col items-end gap-4 pointer-events-auto h-full overflow-y-auto max-h-[80vh] pb-8 pr-2">
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
-               <h2 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Area Status</h2>
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-blue-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Area Status</h2>
                <div className="space-y-3 font-sans text-xs">
                  {Object.entries(engineState.world.districts).map(([name, data]) => (
-                   <div key={name} className="flex flex-col border-b border-gray-100 pb-2 last:border-0">
-                     <div className="flex justify-between text-gray-800">
+                   <div key={name} className="flex flex-col border-b border-slate-700/30 pb-2 last:border-0">
+                     <div className="flex justify-between text-slate-100">
                        <span className="font-bold">{name}</span>
-                       <span className={data.tension > 60 ? 'text-red-500' : 'text-green-500'}>{data.tension}% Tension</span>
+                       <span className={data.tension > 60 ? 'text-red-400' : 'text-green-400'}>{data.tension}% Tension</span>
                      </div>
-                     <div className="flex justify-between text-gray-500 mt-1 text-[10px]">
-                       <span>Dominant Type: {data.control}</span>
+                     <div className="flex justify-between text-slate-400 mt-1 text-[10px]">
+                       <span>Dominant Guild: {data.control}</span>
                      </div>
                    </div>
                  ))}
                </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
-               <h2 className="text-sm font-bold text-orange-500 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Teams & POIs</h2>
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-orange-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Guilds & Locations</h2>
                <div className="space-y-3 font-sans text-xs mb-4">
                  {Object.entries(engineState.world.factions).map(([name, data]) => (
-                   <div key={name} className="flex flex-col border-b border-gray-100 pb-2 last:border-0">
-                     <div className="flex justify-between text-gray-800">
+                   <div key={name} className="flex flex-col border-b border-slate-700/30 pb-2 last:border-0">
+                     <div className="flex justify-between text-slate-100">
                        <span className="font-bold">{name}</span>
-                       <span className="text-orange-500">Power: {data.power}</span>
+                       <span className="text-orange-400">Power: {data.power}</span>
                      </div>
-                     <div className="flex justify-between text-gray-500 mt-1 text-[10px]">
+                     <div className="flex justify-between text-slate-400 mt-1 text-[10px]">
                        <span>Leader: {data.leader}</span>
                      </div>
                    </div>
                  ))}
                </div>
                
-               <h3 className="text-xs font-bold text-gray-600 uppercase border-b border-gray-200 pb-1 mb-2">Locations</h3>
-               <div className="grid grid-cols-2 gap-2 font-sans text-[10px] text-gray-600">
+               <h3 className="text-xs font-bold text-slate-300 uppercase border-b border-slate-700/50 pb-1 mb-2">Locations</h3>
+               <div className="grid grid-cols-2 gap-2 font-sans text-[10px] text-slate-300">
                  {engineState.world.pois.map(poi => (
-                   <div key={poi.id} className="flex justify-between items-center bg-gray-100 p-1.5 border border-gray-200 rounded-md">
+                   <div key={poi.id} className="flex justify-between items-center bg-black/50 p-1.5 border border-slate-700 rounded-md">
                      <span className="truncate font-semibold" title={poi.name}>{poi.name}</span>
-                     <span className="text-gray-400 ml-1">[{poi.x},{poi.y}]</span>
+                     <span className="text-slate-500 ml-1">[{poi.x},{poi.y}]</span>
                    </div>
                  ))}
                </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 p-4 rounded-xl shadow-lg w-72">
-               <h2 className="text-sm font-bold text-green-600 uppercase tracking-wide border-b border-gray-200 pb-1 mb-2">Trainers</h2>
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+               <h2 className="text-sm font-bold text-green-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Heroes</h2>
                <div className="space-y-3 font-sans text-xs">
                  {engineState.chars.map(c => (
-                   <div key={c.id} className="flex flex-col border-b border-gray-100 pb-3 last:border-0">
-                     <div className="flex justify-between text-gray-800 items-center">
+                   <div key={c.id} className="flex flex-col border-b border-slate-700/30 pb-3 last:border-0">
+                     <div className="flex justify-between text-slate-100 items-center">
                        <span className="font-bold flex items-center gap-1" style={{color: `#${c.color.toString(16)}`}}>
                          {c.name}
-                         <span className="text-[9px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">{c.role}</span>
+                         <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">{c.role}</span>
                        </span>
-                       <span className="text-[10px] text-gray-500">{c.persona.trait}</span>
+                       <span className="text-[10px] text-slate-400">{c.persona.trait}</span>
                      </div>
-                     <div className="flex justify-between text-gray-600 mt-1.5 text-[10px]">
+                     <div className="flex justify-between text-slate-300 mt-1.5 text-[10px]">
                        <span>Status: {c.action}</span>
                        <div className="flex gap-2 text-right">
-                         <span className="text-yellow-600 font-bold">₽{c.credits}</span>
+                         <span className="text-yellow-400 font-bold">G{c.credits}</span>
                        </div>
                      </div>
-                     <div className="w-full bg-gray-200 h-1.5 mt-2 flex rounded-full overflow-hidden">
-                        <div className="bg-blue-400 h-full" style={{width: `${c.energy}%`}} />
+                     <div className="w-full bg-slate-800 h-1.5 mt-2 flex rounded-full overflow-hidden">
+                        <div className="bg-blue-500 h-full" style={{width: `${c.energy}%`}} />
                      </div>
-                     <div className="w-full bg-gray-200 h-1.5 mt-1 flex rounded-full overflow-hidden">
-                        <div className="bg-red-400 h-full" style={{width: `${c.health}%`}} />
+                     <div className="w-full bg-slate-800 h-1.5 mt-1 flex rounded-full overflow-hidden">
+                        <div className="bg-red-500 h-full" style={{width: `${c.health}%`}} />
                      </div>
                      {c.inventory.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {c.inventory.map(item => (
-                             <span key={item.id} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200">
+                             <span key={item.id} className="text-[9px] bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded border border-blue-800/50">
                                {item.name}
                              </span>
                           ))}
