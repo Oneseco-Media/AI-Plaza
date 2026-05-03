@@ -1,5 +1,13 @@
 // AI Town World Engine Logic (Mockup)
 
+export type PointOfInterest = {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  type: 'Bar' | 'Shop' | 'Corp' | 'Hideout';
+};
+
 export type WorldState = {
   globalMood: 'Tense' | 'Peaceful' | 'Chaotic' | 'Optimistic' | 'Suspicious';
   districts: Record<string, { control: string; tension: number; description: string }>;
@@ -8,6 +16,7 @@ export type WorldState = {
   turn: number;
   timeOfDay: number; // 0-23
   weather: 'Clear' | 'Rain' | 'Acid Rain' | 'Smog';
+  pois: PointOfInterest[];
 };
 
 export type Event = {
@@ -29,6 +38,7 @@ export type Character = {
   targetY: number;
   energy: number; // 0-100
   action: string;
+  credits: number;
 };
 
 export type Dialogue = {
@@ -57,15 +67,21 @@ export const initialWorldState: WorldState = {
   },
   turn: 0,
   timeOfDay: 8, // Start at 8 AM
-  weather: 'Clear'
+  weather: 'Clear',
+  pois: [
+    { id: 'poi1', name: 'The Neon Lotus', x: 20, y: 15, type: 'Bar' },
+    { id: 'poi2', name: 'Scrap Exchange', x: 8, y: 8, type: 'Shop' },
+    { id: 'poi3', name: 'Corp Tower', x: 35, y: 25, type: 'Corp' },
+    { id: 'poi4', name: 'Cartel Hideout', x: 15, y: 20, type: 'Hideout' }
+  ]
 };
 
 // Map size 40x30, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', personality: 'Rebellious hacker', color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle' },
-  { id: 'c2', name: 'Cipher', personality: 'Calculated info-broker', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle' },
-  { id: 'c3', name: 'Krieg', personality: 'Ruthless warlord', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle' },
-  { id: 'c4', name: 'Vance', personality: 'Cold corporate director', color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle' }
+  { id: 'c1', name: 'Neon', personality: 'Rebellious hacker', color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', credits: 1500 },
+  { id: 'c2', name: 'Cipher', personality: 'Calculated info-broker', color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', credits: 8000 },
+  { id: 'c3', name: 'Krieg', personality: 'Ruthless warlord', color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', credits: 450 },
+  { id: 'c4', name: 'Vance', personality: 'Cold corporate director', color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', credits: 50000 }
 ];
 
 // Mock Conversational Data
@@ -166,6 +182,12 @@ class Engine {
           c.targetX = Math.max(0, Math.min(39, c.x + (closestChar.x > c.x ? 1 : closestChar.x < c.x ? -1 : 0)));
           c.targetY = Math.max(0, Math.min(29, c.y + (closestChar.y > c.y ? 1 : closestChar.y < c.y ? -1 : 0)));
           c.action = 'Approaching';
+        } else if (Math.random() > 0.7) {
+          // visit a POI
+          const randomPoi = this.state.pois[Math.floor(Math.random() * this.state.pois.length)];
+          c.targetX = randomPoi.x;
+          c.targetY = randomPoi.y;
+          c.action = `Heading to ${randomPoi.name}`;
         } else {
           // random walk 1-3 tiles
           const dir = Math.floor(Math.random() * 4);

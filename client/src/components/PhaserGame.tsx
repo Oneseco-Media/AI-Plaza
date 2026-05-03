@@ -49,6 +49,7 @@ export default function PhaserGame() {
     let sprites: Record<string, Phaser.GameObjects.Sprite> = {};
     let names: Record<string, Phaser.GameObjects.Text> = {};
     let bubbles: Record<string, Phaser.GameObjects.Container> = {};
+    let poiMarkers: Record<string, Phaser.GameObjects.Container> = {};
     let currentDialogues: Set<string> = new Set();
     
     let currentScene: Phaser.Scene;
@@ -120,6 +121,23 @@ export default function PhaserGame() {
         names[c.id] = this.add.text(c.x * TILE_SIZE + TILE_SIZE/2, c.y * TILE_SIZE - 20, c.name, {
           fontFamily: 'monospace', fontSize: '12px', color: '#fff', align: 'center', stroke: '#000', strokeThickness: 2
         }).setOrigin(0.5);
+      });
+
+      // Setup POIs
+      engineState.world.pois.forEach(poi => {
+        const poiBg = this.add.graphics();
+        poiBg.fillStyle(0x000000, 0.6);
+        poiBg.lineStyle(1, 0xffaa00, 0.8);
+        poiBg.strokeRect(-20, -10, 40, 20);
+        poiBg.fillRect(-20, -10, 40, 20);
+        
+        const poiText = this.add.text(0, 0, poi.name.substring(0, 3), {
+          fontFamily: 'monospace', fontSize: '10px', color: '#ffaa00'
+        }).setOrigin(0.5);
+
+        const container = this.add.container(poi.x * TILE_SIZE + TILE_SIZE/2, poi.y * TILE_SIZE + TILE_SIZE/2, [poiBg, poiText]);
+        container.setDepth(10);
+        poiMarkers[poi.id] = container;
       });
 
       // Camera settings
@@ -391,8 +409,8 @@ export default function PhaserGame() {
             </div>
 
             <div className="bg-black/60 backdrop-blur-md border border-orange-900/50 p-4 rounded-md shadow-2xl w-72">
-               <h2 className="text-sm font-display text-orange-400 uppercase tracking-widest border-b border-orange-900/50 pb-1 mb-2">Factions</h2>
-               <div className="space-y-3 font-mono text-xs">
+               <h2 className="text-sm font-display text-orange-400 uppercase tracking-widest border-b border-orange-900/50 pb-1 mb-2">Factions & POIs</h2>
+               <div className="space-y-3 font-mono text-xs mb-4">
                  {Object.entries(engineState.world.factions).map(([name, data]) => (
                    <div key={name} className="flex flex-col border-b border-orange-900/20 pb-2 last:border-0">
                      <div className="flex justify-between text-white">
@@ -402,6 +420,16 @@ export default function PhaserGame() {
                      <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
                        <span>Leader: {data.leader}</span>
                      </div>
+                   </div>
+                 ))}
+               </div>
+               
+               <h3 className="text-xs font-display text-yellow-400/80 uppercase border-b border-yellow-900/50 pb-1 mb-2">Locations</h3>
+               <div className="grid grid-cols-2 gap-2 font-mono text-[10px] text-muted-foreground">
+                 {engineState.world.pois.map(poi => (
+                   <div key={poi.id} className="flex justify-between items-center bg-black/40 p-1 border border-yellow-900/20 rounded">
+                     <span className="truncate" title={poi.name}>{poi.name}</span>
+                     <span className="text-yellow-500/70 ml-1">[{poi.x},{poi.y}]</span>
                    </div>
                  ))}
                </div>
@@ -418,6 +446,7 @@ export default function PhaserGame() {
                      </div>
                      <div className="flex justify-between text-muted-foreground mt-1 text-[10px]">
                        <span>Status: {c.action}</span>
+                       <span className="text-yellow-400/80">${c.credits}</span>
                        <span>Loc: [{c.x}, {c.y}]</span>
                      </div>
                    </div>
