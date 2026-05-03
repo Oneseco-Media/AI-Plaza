@@ -459,7 +459,7 @@ class Engine {
         const relWithClosest = this.state.relationships[`${c.name}:${closestChar.name}`] || this.state.relationships[`${closestChar.name}:${c.name}`] || 50;
 
         // Medics heal the incapacitated
-        if (c.role === 'Medic' && closestChar.health <= 0 && distToClosest <= 2) {
+        if (c.role === 'Cleric' && closestChar.health <= 0 && distToClosest <= 2) {
            c.action = `Healing ${closestChar.name}`;
            closestChar.health = 50;
            c.energy -= 20;
@@ -478,7 +478,7 @@ class Engine {
            this.emit({ id: `float_${Date.now()}_2`, type: 'FLOATING_TEXT', description: '', payload: { charId: closestChar.id, text: `DEFEATED`, color: '#ff0000' }, timestamp: '' });
         }
         // Check for robbery
-        else if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8 && relWithClosest < 60 && c.role === 'Thief') {
+        else if (distToClosest === 1 && c.persona.greed > 7 && c.persona.aggressiveness > 6 && closestChar.credits > 500 && Math.random() > 0.8 && relWithClosest < 60 && c.role === 'Rogue') {
            c.action = `Stealing from ${closestChar.name}`;
            c.task = 'Stealing';
            closestChar.action = 'Being Robbed';
@@ -493,7 +493,7 @@ class Engine {
           c.targetX = randomPoi.x;
           c.targetY = randomPoi.y;
           
-          if (c.role === 'Researcher' && Math.random() > 0.4) {
+          if (c.role === 'Mage' && Math.random() > 0.4) {
              c.task = 'Researching';
              c.action = `Heading to ${randomPoi.name} to Research`;
           } else if (c.role === 'Paladin') {
@@ -660,7 +660,7 @@ class Engine {
 
     // 2. Generate Dialogue every few turns, or if they are close
     // Pick two random characters that are close to each other
-    let speakers = [];
+    let speakers: Character[] = [];
     for (let i = 0; i < this.chars.length; i++) {
       for (let j = i + 1; j < this.chars.length; j++) {
         const dist = Math.abs(this.chars[i].x - this.chars[j].x) + Math.abs(this.chars[i].y - this.chars[j].y);

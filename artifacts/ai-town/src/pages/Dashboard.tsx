@@ -30,6 +30,7 @@ export default function Dashboard() {
       }, 3000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRun]);
 
   useEffect(() => {
