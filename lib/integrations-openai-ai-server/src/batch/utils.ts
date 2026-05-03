@@ -1,5 +1,5 @@
 import pLimit from "p-limit";
-import pRetry from "p-retry";
+import pRetry, { AbortError, type RetryContext } from "p-retry";
 
 /**
  * Batch Processing Utilities
@@ -74,7 +74,7 @@ export async function batchProcess<T, R>(
             if (isRateLimitError(error)) {
               throw error;
             }
-            throw new pRetry.AbortError(
+            throw new AbortError(
               error instanceof Error ? error : new Error(String(error))
             );
           }
@@ -112,11 +112,9 @@ export async function batchProcessWithSSE<T, R>(
           minTimeout,
           maxTimeout,
           factor: 2,
-          onFailedAttempt: (error) => {
-            if (!isRateLimitError(error)) {
-              throw new pRetry.AbortError(
-                error instanceof Error ? error : new Error(String(error))
-              );
+          onFailedAttempt: (ctx: RetryContext) => {
+            if (!isRateLimitError(ctx.error)) {
+              throw new AbortError(ctx.error);
             }
           },
         }

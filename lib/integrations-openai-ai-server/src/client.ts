@@ -1,18 +1,18 @@
 import OpenAI from "openai";
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
-  );
-}
+const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
+// Only throw if we actually try to use the client; warn at startup to aid debugging.
+if (!baseURL || !apiKey) {
+  console.warn(
+    "[integrations-openai] AI_INTEGRATIONS_OPENAI_BASE_URL or AI_INTEGRATIONS_OPENAI_API_KEY is not set. " +
+    "AI features will use fallback responses. " +
+    "Run setupReplitAIIntegrations() to provision the OpenAI integration."
   );
 }
 
 export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: apiKey ?? "placeholder",
+  baseURL: baseURL ?? "https://api.openai.com/v1",
 });
