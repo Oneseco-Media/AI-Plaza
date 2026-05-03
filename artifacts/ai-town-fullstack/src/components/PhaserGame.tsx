@@ -56,7 +56,9 @@ export default function PhaserGame() {
     let currentScene: Phaser.Scene;
     let rainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
     let acidRainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+    let smogEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
     let dayNightOverlay: Phaser.GameObjects.Rectangle | null = null;
+    const processedFloatIds = new Set<string>();
 
     const assetBase = import.meta.env.BASE_URL;
     function preloadScene(this: Phaser.Scene) {
@@ -280,19 +282,19 @@ export default function PhaserGame() {
         if (engineState.world.weather === 'Rain') {
           if (!rainEmitter.active) rainEmitter.start();
           acidRainEmitter.stop();
-          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
+          smogEmitter?.stop();
         } else if (engineState.world.weather === 'Acid Rain') {
           if (!acidRainEmitter.active) acidRainEmitter.start();
           rainEmitter.stop();
-          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
+          smogEmitter?.stop();
         } else if (engineState.world.weather === 'Smog') {
           rainEmitter.stop();
           acidRainEmitter.stop();
-          if ((this as any).smogEmitter && !(this as any).smogEmitter.active) (this as any).smogEmitter.start();
+          if (smogEmitter && !smogEmitter.active) smogEmitter.start();
         } else {
           rainEmitter.stop();
           acidRainEmitter.stop();
-          if ((this as any).smogEmitter) (this as any).smogEmitter.stop();
+          smogEmitter?.stop();
         }
       }
 
@@ -370,14 +372,12 @@ export default function PhaserGame() {
         }
       });
 
-      // Look for fresh floating text events that we haven't rendered
-      // Normally we'd use a better ID tracking system, but for mockup we just take the first un-processed ones
-      // Since events are unshifted, we just check the most recent events
-      const recentFloatEvents = events.filter(e => e.type === 'FLOATING_TEXT' && e.timestamp === '');
+      // Render any floating text events not yet shown, tracked by event id
+      const recentFloatEvents = events.filter(e => e.type === 'FLOATING_TEXT' && !processedFloatIds.has(e.id));
       recentFloatEvents.forEach(e => {
          if (currentScene) {
             showFloatingText(currentScene, e.payload.charId, e.payload.text, e.payload.color);
-            e.timestamp = Date.now().toString(); // Hack to mark it as read without mutating state poorly
+            processedFloatIds.add(e.id);
          }
       });
 
