@@ -6,6 +6,7 @@ export type PointOfInterest = {
   x: number;
   y: number;
   type: 'Bar' | 'Shop' | 'Corp' | 'Hideout';
+  district: string;
 };
 
 export type Persona = {
@@ -14,6 +15,13 @@ export type Persona = {
   sociability: number; // 1-10
   greed: number; // 1-10
   curiosity: number; // 1-10
+};
+
+export type InventoryItem = {
+  id: string;
+  name: string;
+  value: number;
+  type: 'Scrap' | 'Data' | 'Weapon' | 'Tech';
 };
 
 export type WorldState = {
@@ -29,7 +37,7 @@ export type WorldState = {
 
 export type Event = {
   id: string;
-  type: 'MOOD_CHANGE' | 'TERRITORY_SHIFT' | 'FACTION_POWER' | 'RELATIONSHIP_UPDATE' | 'SYSTEM_ALERT';
+  type: 'MOOD_CHANGE' | 'TERRITORY_SHIFT' | 'FACTION_POWER' | 'RELATIONSHIP_UPDATE' | 'SYSTEM_ALERT' | 'TASK_COMPLETED';
   description: string;
   payload: any;
   timestamp: string;
@@ -48,6 +56,7 @@ export type Character = {
   action: string;
   task: string | null;
   credits: number;
+  inventory: InventoryItem[];
 };
 
 export type Dialogue = {
@@ -78,19 +87,19 @@ export const initialWorldState: WorldState = {
   timeOfDay: 8, // Start at 8 AM
   weather: 'Clear',
   pois: [
-    { id: 'poi1', name: 'The Neon Lotus', x: 20, y: 15, type: 'Bar' },
-    { id: 'poi2', name: 'Scrap Exchange', x: 8, y: 8, type: 'Shop' },
-    { id: 'poi3', name: 'Corp Tower', x: 35, y: 25, type: 'Corp' },
-    { id: 'poi4', name: 'Cartel Hideout', x: 15, y: 20, type: 'Hideout' }
+    { id: 'poi1', name: 'The Neon Lotus', x: 20, y: 15, type: 'Bar', district: 'Neon Grid' },
+    { id: 'poi2', name: 'Scrap Exchange', x: 8, y: 8, type: 'Shop', district: 'The Rust Wastes' },
+    { id: 'poi3', name: 'Corp Tower', x: 35, y: 25, type: 'Corp', district: 'Aero Heights' },
+    { id: 'poi4', name: 'Cartel Hideout', x: 15, y: 20, type: 'Hideout', district: 'Neon Grid' }
   ]
 };
 
 // Map size 40x30, Tile 32
 export const characters: Character[] = [
-  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 1500 },
-  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 8000 },
-  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', task: null, credits: 450 },
-  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', task: null, credits: 50000 }
+  { id: 'c1', name: 'Neon', persona: { trait: 'Rebellious hacker', aggressiveness: 4, sociability: 7, greed: 3, curiosity: 9 }, color: 0x00ffff, x: 10, y: 15, targetX: 10, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 1500, inventory: [] },
+  { id: 'c2', name: 'Cipher', persona: { trait: 'Calculated info-broker', aggressiveness: 2, sociability: 8, greed: 8, curiosity: 6 }, color: 0xff00ff, x: 30, y: 15, targetX: 30, targetY: 15, energy: 100, action: 'Idle', task: null, credits: 8000, inventory: [] },
+  { id: 'c3', name: 'Krieg', persona: { trait: 'Ruthless warlord', aggressiveness: 10, sociability: 2, greed: 7, curiosity: 3 }, color: 0xff4400, x: 5, y: 5, targetX: 5, targetY: 5, energy: 100, action: 'Idle', task: null, credits: 450, inventory: [] },
+  { id: 'c4', name: 'Vance', persona: { trait: 'Cold corporate director', aggressiveness: 6, sociability: 5, greed: 9, curiosity: 4 }, color: 0x44ff44, x: 35, y: 25, targetX: 35, targetY: 25, energy: 100, action: 'Idle', task: null, credits: 50000, inventory: [] }
 ];
 
 // Mock Conversational Data
@@ -189,7 +198,21 @@ class Engine {
               if (success) {
                  const found = Math.floor(Math.random() * 500) + 100;
                  c.credits += found;
-                 outcomeMsg = `Found ${found} creds.`;
+                 
+                 // Chance to find a physical item when scavenging
+                 if (Math.random() > 0.7) {
+                    const itemTypes: InventoryItem['type'][] = ['Scrap', 'Tech', 'Weapon'];
+                    const newItem: InventoryItem = {
+                       id: `itm_${Date.now()}_${Math.random()}`,
+                       name: `Salvaged ${itemTypes[Math.floor(Math.random() * itemTypes.length)]}`,
+                       value: Math.floor(Math.random() * 300) + 50,
+                       type: itemTypes[Math.floor(Math.random() * itemTypes.length)]
+                    };
+                    c.inventory.push(newItem);
+                    outcomeMsg = `Found ${found} creds and a ${newItem.name}.`;
+                 } else {
+                    outcomeMsg = `Found ${found} creds.`;
+                 }
               } else {
                  outcomeMsg = `Found nothing.`;
               }
@@ -212,11 +235,14 @@ class Engine {
               }
            }
 
+           const currentPoi = this.state.pois.find(p => p.x === c.x && p.y === c.y);
+           const districtName = currentPoi ? currentPoi.district : 'Neon Grid';
+
            this.emit({
              id: `ev_${Date.now()}_${Math.random()}`,
-             type: 'SYSTEM_ALERT',
+             type: 'TASK_COMPLETED',
              description: `${c.name} finished ${c.task}. Roll: ${roll}. ${outcomeMsg}`,
-             payload: { char: c.name, task: c.task, roll, success },
+             payload: { char: c.name, task: c.task, roll, success, district: districtName },
              timestamp: new Date().toLocaleTimeString()
            });
 
@@ -435,6 +461,24 @@ class Engine {
     this.on('TERRITORY_SHIFT', (e) => {
       if (this.state.districts[e.payload.district]) {
         this.state.districts[e.payload.district].control = e.payload.newControl;
+      }
+    });
+
+    // Framework Logic for Task Consequences
+    this.on('TASK_COMPLETED', (e) => {
+      const { task, success, district } = e.payload;
+      
+      if (this.state.districts[district]) {
+         if (task === 'Extorting' && success) {
+            // Extorting successfully increases tension in the district
+            this.state.districts[district].tension = Math.min(100, this.state.districts[district].tension + 10);
+         } else if (task === 'Trading' && success) {
+            // Good trade cools things down
+            this.state.districts[district].tension = Math.max(0, this.state.districts[district].tension - 5);
+         } else if (task === 'Extorting' && !success) {
+            // Failed extortion leads to higher tension and lower faction power for the aggressor's implicitly linked faction
+            this.state.districts[district].tension = Math.min(100, this.state.districts[district].tension + 5);
+         }
       }
     });
   }
