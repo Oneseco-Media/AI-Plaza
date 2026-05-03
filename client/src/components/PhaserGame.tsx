@@ -53,6 +53,7 @@ export default function PhaserGame() {
     
     let currentScene: Phaser.Scene;
     let rainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+    let acidRainEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
 
     function preloadScene(this: Phaser.Scene) {
       this.load.spritesheet('dude', '/dude.png', { frameWidth: 32, frameHeight: 48 });
@@ -126,7 +127,7 @@ export default function PhaserGame() {
       this.cameras.main.setZoom(1.5);
 
       // Create particle emitter for weather
-      const rainParticles = this.add.particles(0, 0, 'rain', {
+      const rainConfig = {
         x: { min: 0, max: MAP_WIDTH * TILE_SIZE },
         y: 0,
         lifespan: 2000,
@@ -134,11 +135,21 @@ export default function PhaserGame() {
         speedX: { min: -50, max: -20 },
         scale: { start: 0.4, end: 0.1 },
         quantity: 2,
-        blendMode: 'ADD'
-      });
+        blendMode: 'ADD' as const
+      };
+
+      const rainParticles = this.add.particles(0, 0, 'rain', rainConfig);
       rainParticles.setDepth(50);
       rainParticles.stop(); // default stopped
       rainEmitter = rainParticles;
+
+      const acidRainParticles = this.add.particles(0, 0, 'rain', {
+        ...rainConfig,
+        tint: 0x00ff00
+      });
+      acidRainParticles.setDepth(50);
+      acidRainParticles.stop();
+      acidRainEmitter = acidRainParticles;
     }
 
     function showSpeechBubble(scene: Phaser.Scene, charId: string, text: string) {
@@ -207,16 +218,16 @@ export default function PhaserGame() {
       this.cameras.main.setAlpha(brightness);
 
       // Handle weather effects
-      if (rainEmitter) {
-        if (engineState.world.weather === 'Rain' || engineState.world.weather === 'Acid Rain') {
+      if (rainEmitter && acidRainEmitter) {
+        if (engineState.world.weather === 'Rain') {
           if (!rainEmitter.active) rainEmitter.start();
-          if (engineState.world.weather === 'Acid Rain') {
-             rainEmitter.setTint(0x00ff00);
-          } else {
-             rainEmitter.setTint(0xffffff);
-          }
+          acidRainEmitter.stop();
+        } else if (engineState.world.weather === 'Acid Rain') {
+          if (!acidRainEmitter.active) acidRainEmitter.start();
+          rainEmitter.stop();
         } else {
           rainEmitter.stop();
+          acidRainEmitter.stop();
         }
       }
 
