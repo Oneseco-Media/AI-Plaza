@@ -381,6 +381,7 @@ export default function PhaserGame() {
                       <span className={`
                         ${e.type === 'SYSTEM_ALERT' ? 'text-destructive-foreground' : 
                           e.type === 'TERRITORY_SHIFT' ? 'text-primary' : 
+                          e.type === 'TASK_COMPLETED' ? 'text-yellow-400' :
                           'text-accent'}
                       `}>{e.description}</span>
                     </div>
@@ -449,6 +450,15 @@ export default function PhaserGame() {
                        <span className="text-yellow-400/80">${c.credits}</span>
                        <span>Loc: [{c.x}, {c.y}]</span>
                      </div>
+                     {c.inventory.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {c.inventory.map(item => (
+                             <span key={item.id} className="text-[8px] bg-primary/20 text-primary px-1 py-0.5 rounded border border-primary/30">
+                               {item.name}
+                             </span>
+                          ))}
+                        </div>
+                     )}
                    </div>
                  ))}
                </div>
