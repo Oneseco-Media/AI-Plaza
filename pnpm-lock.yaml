@@ -167,8 +167,8 @@ importers:
   artifacts/ai-town:
     dependencies:
       phaser:
-        specifier: ^4.1.0
-        version: 4.1.0
+        specifier: ^3.90.0
+        version: 3.90.0
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0
@@ -2612,8 +2612,8 @@ packages:
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
 
-  phaser@4.1.0:
-    resolution: {integrity: sha512-ZXv5Bhyg2BqJGAAxNI2xvmzGXW9q+TwUG1RLri5ZDBYGGtcma6aWUO/eJ7EbozeqRd5fKdpo4ycNMQt+Bi5iYg==}
+  phaser@3.90.0:
+    resolution: {integrity: sha512-/cziz/5ZIn02uDkC9RzN8VF9x3Gs3XdFFf9nkiMEQT3p7hQlWuyjy4QWosU802qqno2YSLn2BfqwOKLv/sSVfQ==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -5185,7 +5185,7 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  phaser@4.1.0:
+  phaser@3.90.0:
     dependencies:
       eventemitter3: 5.0.4
 
