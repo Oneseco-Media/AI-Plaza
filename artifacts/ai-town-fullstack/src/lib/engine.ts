@@ -235,6 +235,12 @@ class Engine {
 
   // Pathfinding / wandering mockup
   private updateCharacterPositions() {
+    // Ephemeral spatial grid for O(1) collision lookups
+    const occupiedCoords = new Set<string>();
+    this.chars.forEach(c => {
+      occupiedCoords.add(`${c.x},${c.y}`);
+    });
+
     // Basic random walk
     this.chars.forEach(c => {
       // Energy/Health management
@@ -539,21 +545,28 @@ class Engine {
         else if (c.y > c.targetY) newY--;
         
         // Check collision
-        const collision = this.chars.some(other => other.id !== c.id && other.x === newX && other.y === newY);
+        occupiedCoords.delete(`${c.x},${c.y}`);
+        const collision = occupiedCoords.has(`${newX},${newY}`);
         
         if (!collision) {
            c.x = newX;
            c.y = newY;
            c.action = 'Moving';
+           occupiedCoords.add(`${c.x},${c.y}`);
         } else {
            c.action = 'Blocked';
            // Basic pathfinding around obstacle
-           if (c.x !== c.targetX && !this.chars.some(other => other.id !== c.id && other.x === newX && other.y === c.y)) {
+           if (c.x !== c.targetX && !occupiedCoords.has(`${newX},${c.y}`)) {
               c.x = newX;
               c.action = 'Moving (Alt)';
-           } else if (c.y !== c.targetY && !this.chars.some(other => other.id !== c.id && other.x === c.x && other.y === newY)) {
+              occupiedCoords.add(`${c.x},${c.y}`);
+           } else if (c.y !== c.targetY && !occupiedCoords.has(`${c.x},${newY}`)) {
               c.y = newY;
               c.action = 'Moving (Alt)';
+              occupiedCoords.add(`${c.x},${c.y}`);
+           } else {
+              // Blocked completely, stay in place
+              occupiedCoords.add(`${c.x},${c.y}`);
            }
         }
 
