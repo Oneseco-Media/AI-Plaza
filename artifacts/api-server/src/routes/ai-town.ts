@@ -1,25 +1,57 @@
 import { Router } from "express";
+import { z } from "zod";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const aiTownRouter = Router();
 
+const dialogueSchema = z.object({
+  character: z.string().min(1).max(100),
+  otherCharacter: z.string().max(100).optional(),
+  worldMood: z.string().min(1).max(200),
+  faction: z.string().max(100).optional(),
+  role: z.string().min(1).max(100),
+  trait: z.string().min(1).max(100),
+  location: z.string().max(100).optional(),
+});
+
+const worldEventSchema = z.object({
+  eventType: z.string().min(1).max(100),
+  worldMood: z.string().min(1).max(200),
+  districts: z.record(
+    z.string().max(100),
+    z.object({
+      control: z.string().max(100),
+      tension: z.number().min(0).max(100),
+    })
+  ).default({}),
+  factions: z.record(
+    z.string().max(100),
+    z.object({
+      power: z.number().min(0).max(100),
+      leader: z.string().max(100),
+    })
+  ).default({}),
+});
+
+const taskOutcomeSchema = z.object({
+  characterName: z.string().min(1).max(100),
+  role: z.string().min(1).max(100),
+  task: z.string().min(1).max(200),
+  success: z.boolean(),
+  roll: z.number().min(1).max(20),
+  location: z.string().max(100).optional(),
+});
+
+
 // POST /api/ai-town/dialogue
 // Generate AI dialogue for a character interaction
 aiTownRouter.post("/ai-town/dialogue", async (req, res) => {
-  const { character, otherCharacter, worldMood, faction, role, trait, location } = req.body as {
-    character: string;
-    otherCharacter?: string;
-    worldMood: string;
-    faction?: string;
-    role: string;
-    trait: string;
-    location?: string;
-  };
-
-  if (!character || !role || !trait || !worldMood) {
-    res.status(400).json({ error: "character, role, trait, and worldMood are required" });
+  const parseResult = dialogueSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid input", details: parseResult.error.errors });
     return;
   }
+  const { character, otherCharacter, worldMood, faction, role, trait, location } = parseResult.data;
 
   try {
     const systemPrompt = `You are simulating dialogue for an RPG world engine. 
@@ -64,17 +96,12 @@ Do NOT use quotation marks around the response. Just the raw dialogue line.`;
 // POST /api/ai-town/world-event
 // Generate an AI-driven world event description
 aiTownRouter.post("/ai-town/world-event", async (req, res) => {
-  const { eventType, worldMood, districts, factions } = req.body as {
-    eventType: string;
-    worldMood: string;
-    districts: Record<string, { control: string; tension: number }>;
-    factions: Record<string, { power: number; leader: string }>;
-  };
-
-  if (!eventType || !worldMood) {
-    res.status(400).json({ error: "eventType and worldMood are required" });
+  const parseResult = worldEventSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid input", details: parseResult.error.errors });
     return;
   }
+  const { eventType, worldMood, districts, factions } = parseResult.data;
 
   try {
     const districtSummary = Object.entries(districts || {})
@@ -114,19 +141,12 @@ Factions: ${factionSummary || "Unknown"}.`
 // POST /api/ai-town/task-outcome
 // Generate narrative text for a completed task
 aiTownRouter.post("/ai-town/task-outcome", async (req, res) => {
-  const { characterName, role, task, success, roll, location } = req.body as {
-    characterName: string;
-    role: string;
-    task: string;
-    success: boolean;
-    roll: number;
-    location?: string;
-  };
-
-  if (!characterName || !task) {
-    res.status(400).json({ error: "characterName and task are required" });
+  const parseResult = taskOutcomeSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid input", details: parseResult.error.errors });
     return;
   }
+  const { characterName, role, task, success, roll, location } = parseResult.data;
 
   try {
     const completion = await openai.chat.completions.create({
