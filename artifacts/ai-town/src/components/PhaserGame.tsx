@@ -407,8 +407,8 @@ export default function PhaserGame() {
       <div className="absolute inset-0 pointer-events-none z-10 p-4 flex flex-col justify-between">
          
          {/* Top HUD */}
-         <div className="flex justify-between items-start">
-            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg pointer-events-auto w-64">
+         <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-4">
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg pointer-events-auto w-full sm:w-64">
                <h1 className="text-xl font-bold text-slate-100 tracking-wide">Realm Engine</h1>
                <div className="mt-2 space-y-1 font-sans text-xs">
                  <div className="flex justify-between">
@@ -437,7 +437,7 @@ export default function PhaserGame() {
             </div>
 
             {/* Event Log */}
-            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-3 rounded-xl shadow-lg pointer-events-auto w-64 h-24 flex flex-col mt-4">
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-3 rounded-xl shadow-lg pointer-events-auto w-full sm:w-64 h-24 flex flex-col">
                <h2 className="font-bold text-sm text-slate-200 mb-1 uppercase tracking-wide border-b border-slate-700 pb-1">Event Log</h2>
                <div className="overflow-y-auto font-sans text-[10px] space-y-1 flex-1 pr-1 flex flex-col-reverse">
                  {engineState.events.slice(0, 8).map((e, i) => (
@@ -457,7 +457,7 @@ export default function PhaserGame() {
 
          {/* Right Side HUD - Districts & Characters */}
          <div className="flex flex-col items-end gap-4 pointer-events-auto h-full overflow-y-auto max-h-[80vh] pb-8 pr-2">
-            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-full sm:w-72">
                <h2 className="text-sm font-bold text-blue-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Area Status</h2>
                <div className="space-y-3 font-sans text-xs">
                  {Object.entries(engineState.world.districts).map(([name, data]) => (
@@ -474,7 +474,7 @@ export default function PhaserGame() {
                </div>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-full sm:w-72">
                <h2 className="text-sm font-bold text-orange-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Guilds & Locations</h2>
                <div className="space-y-3 font-sans text-xs mb-4">
                  {Object.entries(engineState.world.factions).map(([name, data]) => (
@@ -501,7 +501,7 @@ export default function PhaserGame() {
                </div>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-72">
+            <div className="bg-black/40 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-lg w-full sm:w-72">
                <h2 className="text-sm font-bold text-green-400 uppercase tracking-wide border-b border-slate-700/50 pb-1 mb-2">Heroes</h2>
                <div className="space-y-3 font-sans text-xs">
                  {engineState.chars.map(c => (
